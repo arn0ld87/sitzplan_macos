@@ -1,0 +1,145 @@
+{
+  "_hinweis": "Regelpruefung. Massgeblich: src/data/sitzregeln.ts. Erfundene Daten.",
+  "_grundlage": {
+    "klasseId": "aaaa0000-0000-4000-8000-00000000000a",
+    "hinweis": "Nachbarn sind ausschliesslich Plaetze desselben Moebelstuecks. Ein Einzeltisch hat keine Nachbarn, ein Doppeltisch genau einen.",
+    "moebel": [
+      {
+        "id": "11111111-1111-4111-8111-111111111111",
+        "typ": "table_double",
+        "sitzplaetze": [
+          "11111111-1111-4111-8111-111111111111__sitz_1",
+          "11111111-1111-4111-8111-111111111111__sitz_2"
+        ]
+      },
+      {
+        "id": "22222222-2222-4222-8222-222222222222",
+        "typ": "table_single",
+        "sitzplaetze": ["22222222-2222-4222-8222-222222222222__sitz_1"]
+      },
+      {
+        "id": "99999999-9999-4999-8999-999999999999",
+        "typ": "table_double",
+        "sitzplaetze": [
+          "99999999-9999-4999-8999-999999999999__sitz_1",
+          "99999999-9999-4999-8999-999999999999__sitz_2"
+        ]
+      }
+    ],
+    "schueler": [
+      { "id": "c1c1c1c1-0000-4000-8000-000000000001", "name": "Alva Birkner" },
+      { "id": "c2c2c2c2-0000-4000-8000-000000000002", "name": "Bo Castellan" },
+      { "id": "c3c3c3c3-0000-4000-8000-000000000003", "name": "Cem Dorn" },
+      { "id": "c4c4c4c4-0000-4000-8000-000000000004", "name": "Dara Elm" }
+    ]
+  },
+  "faelle": [
+    {
+      "name": "nicht_neben verletzt — beide am selben Doppeltisch",
+      "zuordnungen": {
+        "11111111-1111-4111-8111-111111111111__sitz_1": "c1c1c1c1-0000-4000-8000-000000000001",
+        "11111111-1111-4111-8111-111111111111__sitz_2": "c2c2c2c2-0000-4000-8000-000000000002"
+      },
+      "regeln": [
+        { "id": "r1", "klasseId": "aaaa0000-0000-4000-8000-00000000000a", "a": "c1c1c1c1-0000-4000-8000-000000000001", "b": "c2c2c2c2-0000-4000-8000-000000000002", "art": "nicht_neben" }
+      ],
+      "erwartet": { "anzahlKonflikte": 1, "regelIds": ["r1"] }
+    },
+    {
+      "name": "nicht_neben erfuellt — verschiedene Moebel",
+      "zuordnungen": {
+        "11111111-1111-4111-8111-111111111111__sitz_1": "c1c1c1c1-0000-4000-8000-000000000001",
+        "22222222-2222-4222-8222-222222222222__sitz_1": "c2c2c2c2-0000-4000-8000-000000000002"
+      },
+      "regeln": [
+        { "id": "r1", "klasseId": "aaaa0000-0000-4000-8000-00000000000a", "a": "c1c1c1c1-0000-4000-8000-000000000001", "b": "c2c2c2c2-0000-4000-8000-000000000002", "art": "nicht_neben" }
+      ],
+      "erwartet": { "anzahlKonflikte": 0, "regelIds": [] }
+    },
+    {
+      "name": "muss_neben erfuellt — beide am selben Doppeltisch",
+      "zuordnungen": {
+        "11111111-1111-4111-8111-111111111111__sitz_1": "c1c1c1c1-0000-4000-8000-000000000001",
+        "11111111-1111-4111-8111-111111111111__sitz_2": "c2c2c2c2-0000-4000-8000-000000000002"
+      },
+      "regeln": [
+        { "id": "r2", "klasseId": "aaaa0000-0000-4000-8000-00000000000a", "a": "c1c1c1c1-0000-4000-8000-000000000001", "b": "c2c2c2c2-0000-4000-8000-000000000002", "art": "muss_neben" }
+      ],
+      "erwartet": { "anzahlKonflikte": 0, "regelIds": [] }
+    },
+    {
+      "name": "muss_neben verletzt — getrennt gesetzt",
+      "zuordnungen": {
+        "11111111-1111-4111-8111-111111111111__sitz_1": "c1c1c1c1-0000-4000-8000-000000000001",
+        "99999999-9999-4999-8999-999999999999__sitz_1": "c2c2c2c2-0000-4000-8000-000000000002"
+      },
+      "regeln": [
+        { "id": "r2", "klasseId": "aaaa0000-0000-4000-8000-00000000000a", "a": "c1c1c1c1-0000-4000-8000-000000000001", "b": "c2c2c2c2-0000-4000-8000-000000000002", "art": "muss_neben" }
+      ],
+      "erwartet": { "anzahlKonflikte": 1, "regelIds": ["r2"] }
+    },
+    {
+      "name": "Einzeltisch hat keine Nachbarn — muss_neben ist dort immer verletzt",
+      "zuordnungen": {
+        "22222222-2222-4222-8222-222222222222__sitz_1": "c1c1c1c1-0000-4000-8000-000000000001",
+        "11111111-1111-4111-8111-111111111111__sitz_1": "c2c2c2c2-0000-4000-8000-000000000002"
+      },
+      "regeln": [
+        { "id": "r3", "klasseId": "aaaa0000-0000-4000-8000-00000000000a", "a": "c1c1c1c1-0000-4000-8000-000000000001", "b": "c2c2c2c2-0000-4000-8000-000000000002", "art": "muss_neben" }
+      ],
+      "erwartet": { "anzahlKonflikte": 1, "regelIds": ["r3"] }
+    },
+    {
+      "name": "Schueler ohne Platz — Regel wird uebersprungen",
+      "zuordnungen": {
+        "11111111-1111-4111-8111-111111111111__sitz_1": "c1c1c1c1-0000-4000-8000-000000000001"
+      },
+      "regeln": [
+        { "id": "r4", "klasseId": "aaaa0000-0000-4000-8000-00000000000a", "a": "c1c1c1c1-0000-4000-8000-000000000001", "b": "c2c2c2c2-0000-4000-8000-000000000002", "art": "nicht_neben" }
+      ],
+      "erwartet": { "anzahlKonflikte": 0, "hinweis": "Nicht gesetzt heisst nicht bewertbar, nicht erfuellt." }
+    },
+    {
+      "name": "Regel einer fremden Klasse bleibt unberuecksichtigt",
+      "zuordnungen": {
+        "11111111-1111-4111-8111-111111111111__sitz_1": "c1c1c1c1-0000-4000-8000-000000000001",
+        "11111111-1111-4111-8111-111111111111__sitz_2": "c2c2c2c2-0000-4000-8000-000000000002"
+      },
+      "regeln": [
+        { "id": "r5", "klasseId": "ffff0000-0000-4000-8000-00000000000f", "a": "c1c1c1c1-0000-4000-8000-000000000001", "b": "c2c2c2c2-0000-4000-8000-000000000002", "art": "nicht_neben" }
+      ],
+      "erwartet": { "anzahlKonflikte": 0, "regelIds": [] }
+    },
+    {
+      "name": "widersprechende Regeln zum selben Paar — genau eine ist verletzt",
+      "zuordnungen": {
+        "11111111-1111-4111-8111-111111111111__sitz_1": "c1c1c1c1-0000-4000-8000-000000000001",
+        "11111111-1111-4111-8111-111111111111__sitz_2": "c2c2c2c2-0000-4000-8000-000000000002"
+      },
+      "regeln": [
+        { "id": "r6", "klasseId": "aaaa0000-0000-4000-8000-00000000000a", "a": "c1c1c1c1-0000-4000-8000-000000000001", "b": "c2c2c2c2-0000-4000-8000-000000000002", "art": "nicht_neben" },
+        { "id": "r7", "klasseId": "aaaa0000-0000-4000-8000-00000000000a", "a": "c1c1c1c1-0000-4000-8000-000000000001", "b": "c2c2c2c2-0000-4000-8000-000000000002", "art": "muss_neben" }
+      ],
+      "erwartet": {
+        "anzahlKonflikte": 1,
+        "regelIds": ["r6"],
+        "hinweis": "Jede Regel wird fuer sich bewertet. Der Widerspruch wird nicht aufgeloest."
+      }
+    },
+    {
+      "name": "Schueler doppelt gesetzt — der zuletzt eingetragene Platz gilt",
+      "zuordnungen": {
+        "11111111-1111-4111-8111-111111111111__sitz_1": "c1c1c1c1-0000-4000-8000-000000000001",
+        "11111111-1111-4111-8111-111111111111__sitz_2": "c2c2c2c2-0000-4000-8000-000000000002",
+        "99999999-9999-4999-8999-999999999999__sitz_1": "c1c1c1c1-0000-4000-8000-000000000001"
+      },
+      "regeln": [
+        { "id": "r8", "klasseId": "aaaa0000-0000-4000-8000-00000000000a", "a": "c1c1c1c1-0000-4000-8000-000000000001", "b": "c2c2c2c2-0000-4000-8000-000000000002", "art": "nicht_neben" }
+      ],
+      "erwartet": {
+        "anzahlKonflikte": 0,
+        "hinweis": "Alva zaehlt am zuletzt eingetragenen Platz, also am zweiten Doppeltisch. Reihenfolgeabhaengig — in Swift muss die Einfuegereihenfolge des Woerterbuchs nachgebildet werden."
+      }
+    }
+  ]
+}

@@ -1,0 +1,36 @@
+# Geheimnisse — niemals einchecken
+Config.local.xcconfig
+*.local.xcconfig
+.env
+.env.*
+
+# Xcode
+build/
+DerivedData/
+*.xcuserstate
+*.xcuserdatad/
+xcuserdata/
+*.moved-aside
+*.hmap
+*.ipa
+*.dSYM.zip
+*.dSYM
+
+# Xcode-Projektzustand, der nicht geteilt gehört
+*.xcodeproj/project.xcworkspace/xcuserdata/
+*.xcodeproj/xcuserdata/
+*.xcworkspace/xcuserdata/
+*.xcodeproj/project.xcworkspace/xcshareddata/IDEWorkspaceChecks.plist
+
+# Swift Package Manager
+.build/
+.swiftpm/
+Package.resolved.bak
+
+# macOS
+.DS_Store
+._*
+
+# Werkzeuge
+.code-review-graph/
+*.log

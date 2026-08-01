@@ -1,0 +1,81 @@
+{
+  "_hinweis": "Kanonisches PlanDokument, Version 1, mit eingefrorener Raumkopie. Erfundene Daten.",
+  "_plan": {
+    "name": "Deutsch 7a — Halbjahr 2",
+    "status": "aktiv",
+    "revision": 1,
+    "dokument_version": 1
+  },
+  "canvas_document": {
+    "quelle": {
+      "klasseId": "aaaa0000-0000-4000-8000-00000000000a",
+      "raumId": "bbbb0000-0000-4000-8000-00000000000b"
+    },
+    "raumGeometrie": {
+      "breiteCm": 720,
+      "laengeCm": 520,
+      "rasterCm": 25,
+      "objekte": [
+        {
+          "id": "11111111-1111-4111-8111-111111111111",
+          "typ": "table_double",
+          "x_cm": 100,
+          "y_cm": 200,
+          "breite_cm": 120,
+          "tiefe_cm": 50,
+          "rotation_deg": 0
+        },
+        {
+          "id": "22222222-2222-4222-8222-222222222222",
+          "typ": "table_single",
+          "x_cm": 300,
+          "y_cm": 200,
+          "breite_cm": 60,
+          "tiefe_cm": 50,
+          "rotation_deg": 90
+        }
+      ],
+      "sitzplaetze": [
+        {
+          "id": "11111111-1111-4111-8111-111111111111__sitz_1",
+          "objektId": "11111111-1111-4111-8111-111111111111",
+          "lokalX_cm": 30,
+          "lokalY_cm": 25,
+          "bezeichnung": "Platz 1"
+        },
+        {
+          "id": "11111111-1111-4111-8111-111111111111__sitz_2",
+          "objektId": "11111111-1111-4111-8111-111111111111",
+          "lokalX_cm": 90,
+          "lokalY_cm": 25,
+          "bezeichnung": "Platz 2"
+        },
+        {
+          "id": "22222222-2222-4222-8222-222222222222__sitz_1",
+          "objektId": "22222222-2222-4222-8222-222222222222",
+          "lokalX_cm": 30,
+          "lokalY_cm": 25,
+          "bezeichnung": "Platz 1"
+        }
+      ]
+    },
+    "zuordnungen": [
+      {
+        "sitzplatzId": "11111111-1111-4111-8111-111111111111__sitz_1",
+        "schuelerId": "c1c1c1c1-0000-4000-8000-000000000001"
+      },
+      {
+        "sitzplatzId": "11111111-1111-4111-8111-111111111111__sitz_2",
+        "schuelerId": "c2c2c2c2-0000-4000-8000-000000000002"
+      }
+    ]
+  },
+  "_erwartet": {
+    "raumNameKommtAusRaumzeile": true,
+    "raumNameRueckfall": "Raum",
+    "belegtePlaetze": 2,
+    "freiePlaetze": 1,
+    "freierPlatz": "22222222-2222-4222-8222-222222222222__sitz_1",
+    "hinweis": "raumGeometrie ist eingefroren. Aenderungen an der Raumvorlage wirken hier nicht."
+  }
+}

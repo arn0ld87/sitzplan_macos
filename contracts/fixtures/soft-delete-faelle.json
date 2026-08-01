@@ -1,0 +1,84 @@
+{
+  "_hinweis": "Soft-Delete und Papierkorb. Massgeblich: src/data/papierkorb.ts und src/data/laden.ts. Erfundene Daten.",
+  "_regel": "deleted_at IS NULL in jeder Leseabfrage auf Nutzdaten. Papierkorb-Abfragen sind eigene Methoden.",
+  "faelle": [
+    {
+      "name": "aktive Klasse traegt nur ungeloeschte Schueler",
+      "klasse": { "id": "k1", "name": "7a", "deleted_at": null },
+      "schueler": [
+        { "id": "s1", "klasse_id": "k1", "vorname": "Alva", "nachname": "Birkner", "deleted_at": null },
+        { "id": "s2", "klasse_id": "k1", "vorname": "Bo", "nachname": "Castellan", "deleted_at": "2026-07-01T10:00:00Z" }
+      ],
+      "erwartet": {
+        "klasseSichtbar": true,
+        "schuelerInKlasse": ["s1"],
+        "imPapierkorb": [],
+        "hinweis": "Bo ist einzeln geloescht und verschwindet aus der aktiven Klasse."
+      }
+    },
+    {
+      "name": "geloeschte Klasse nimmt ihre Schueler mit — gleicher Zeitstempel",
+      "klasse": { "id": "k2", "name": "9c", "deleted_at": "2026-07-15T12:00:00Z" },
+      "schueler": [
+        { "id": "s3", "klasse_id": "k2", "vorname": "Cem", "nachname": "Dorn", "deleted_at": "2026-07-15T12:00:00Z" },
+        { "id": "s4", "klasse_id": "k2", "vorname": "Dara", "nachname": "Elm", "deleted_at": "2026-07-15T12:00:00Z" }
+      ],
+      "erwartet": {
+        "klasseSichtbar": false,
+        "schuelerInPapierkorbNutzlast": ["s3", "s4"],
+        "hinweis": "Der entscheidende Fall. Wer hier stur nach deleted_at filtert, holt eine leere Klasse aus dem Papierkorb — Datenverlust."
+      }
+    },
+    {
+      "name": "vorher einzeln geloeschter Schueler bleibt geloescht",
+      "klasse": { "id": "k3", "name": "5b", "deleted_at": "2026-07-15T12:00:00Z" },
+      "schueler": [
+        { "id": "s5", "klasse_id": "k3", "vorname": "Elif", "nachname": "Fahr", "deleted_at": "2026-07-15T12:00:00Z" },
+        { "id": "s6", "klasse_id": "k3", "vorname": "Finn", "nachname": "Gorlitz", "deleted_at": "2026-06-01T08:00:00Z" }
+      ],
+      "erwartet": {
+        "schuelerInPapierkorbNutzlast": ["s5"],
+        "hinweis": "Finn traegt einen aelteren Zeitstempel, ging also nicht mit der Klasse. Er bleibt auch nach dem Wiederherstellen geloescht."
+      }
+    },
+    {
+      "name": "zweites Loeschen aendert den Zeitstempel nicht",
+      "eingabe": { "id": "s7", "deleted_at": "2026-06-01T08:00:00Z" },
+      "loeschenMit": "2026-08-01T09:00:00Z",
+      "erwartet": {
+        "deleted_at": "2026-06-01T08:00:00Z",
+        "hinweis": "Sonst verschiebt sich die Reihenfolge im Papierkorb."
+      }
+    },
+    {
+      "name": "Wiederherstellen setzt auf null",
+      "eingabe": { "id": "s8", "deleted_at": "2026-06-01T08:00:00Z" },
+      "erwartet": { "deleted_at": null }
+    },
+    {
+      "name": "Zuweisung eines geloeschten Schuelers wird ausgeblendet, nicht geloescht",
+      "zuweisungen": {
+        "11111111-1111-4111-8111-111111111111__sitz_1": "s1",
+        "11111111-1111-4111-8111-111111111111__sitz_2": "s2"
+      },
+      "aktiveSchueler": ["s1"],
+      "erwartet": {
+        "sichtbareZuweisungen": { "11111111-1111-4111-8111-111111111111__sitz_1": "s1" },
+        "imDokumentWeiterhin": 2,
+        "hinweis": "Die Zuweisung bleibt in canvas_document stehen. Ein wiederhergestellter Schueler bekommt seinen Platz zurueck."
+      }
+    },
+    {
+      "name": "Papierkorb ist nach Loeschzeitpunkt absteigend sortiert",
+      "eintraege": [
+        { "id": "k4", "kind": "klasse", "deletedAt": "2026-07-01T10:00:00Z" },
+        { "id": "r1", "kind": "raum", "deletedAt": "2026-07-20T10:00:00Z" },
+        { "id": "p1", "kind": "sitzplan", "deletedAt": "2026-07-10T10:00:00Z" }
+      ],
+      "erwartet": {
+        "reihenfolge": ["r1", "p1", "k4"],
+        "hinweis": "Sortiert wird ueber den Zeichenkettenvergleich der ISO-Zeitstempel."
+      }
+    }
+  ]
+}

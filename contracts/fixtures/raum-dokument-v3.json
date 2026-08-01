@@ -1,0 +1,104 @@
+{
+  "_hinweis": "Kanonisches RaumDokument, Version 3. Erfundene Daten. Massgeblich: src/data/mapping.ts.",
+  "_raum": {
+    "name": "B204",
+    "breite_cm": 720,
+    "laenge_cm": 520,
+    "raster_cm": 25,
+    "dokument_version": 3
+  },
+  "canvas_document": {
+    "objekte": [
+      {
+        "id": "11111111-1111-4111-8111-111111111111",
+        "typ": "table_double",
+        "x_cm": 100,
+        "y_cm": 200,
+        "breite_cm": 120,
+        "tiefe_cm": 50,
+        "rotation_deg": 0
+      },
+      {
+        "id": "22222222-2222-4222-8222-222222222222",
+        "typ": "table_single",
+        "x_cm": 300,
+        "y_cm": 200,
+        "breite_cm": 60,
+        "tiefe_cm": 50,
+        "rotation_deg": 90
+      },
+      {
+        "id": "33333333-3333-4333-8333-333333333333",
+        "typ": "teacher_desk",
+        "x_cm": 350,
+        "y_cm": 50,
+        "breite_cm": 160,
+        "tiefe_cm": 80,
+        "rotation_deg": 0
+      },
+      {
+        "id": "44444444-4444-4444-8444-444444444444",
+        "typ": "board",
+        "x_cm": 200,
+        "y_cm": 10,
+        "breite_cm": 400,
+        "tiefe_cm": 15,
+        "rotation_deg": 0
+      },
+      {
+        "id": "55555555-5555-4555-8555-555555555555",
+        "typ": "door",
+        "x_cm": 25,
+        "y_cm": 475,
+        "breite_cm": 90,
+        "tiefe_cm": 20,
+        "rotation_deg": 0
+      },
+      {
+        "id": "66666666-6666-4666-8666-666666666666",
+        "typ": "window",
+        "x_cm": 700,
+        "y_cm": 150,
+        "breite_cm": 15,
+        "tiefe_cm": 180,
+        "rotation_deg": 0
+      }
+    ],
+    "sitzplaetze": [
+      {
+        "id": "11111111-1111-4111-8111-111111111111__sitz_1",
+        "objektId": "11111111-1111-4111-8111-111111111111",
+        "lokalX_cm": 30,
+        "lokalY_cm": 25,
+        "bezeichnung": "Platz 1"
+      },
+      {
+        "id": "11111111-1111-4111-8111-111111111111__sitz_2",
+        "objektId": "11111111-1111-4111-8111-111111111111",
+        "lokalX_cm": 90,
+        "lokalY_cm": 25,
+        "bezeichnung": "Platz 2"
+      },
+      {
+        "id": "22222222-2222-4222-8222-222222222222__sitz_1",
+        "objektId": "22222222-2222-4222-8222-222222222222",
+        "lokalX_cm": 30,
+        "lokalY_cm": 25,
+        "bezeichnung": "Platz 1"
+      }
+    ]
+  },
+  "_erwartet": {
+    "anzahlObjekte": 6,
+    "anzahlSitzplaetze": 3,
+    "sitzplaetzeJeMoebel": {
+      "11111111-1111-4111-8111-111111111111": 2,
+      "22222222-2222-4222-8222-222222222222": 1,
+      "33333333-3333-4333-8333-333333333333": 0,
+      "44444444-4444-4444-8444-444444444444": 0,
+      "55555555-5555-4555-8555-555555555555": 0,
+      "66666666-6666-4666-8666-666666666666": 0
+    },
+    "hinweis": "Rundreise Dokument -> Domaene -> Dokument muss identisch sein."
+  }
+}
