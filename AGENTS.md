@@ -24,9 +24,11 @@ unabhängiges Produkt; er teilt mit diesem Repository keine Daten. Warum:
    einem Log. Kein Schlüssel wird mitgeliefert. Schülernamen gehen
    pseudonymisiert als `s1`, `s2` in den Prompt; die Rückabbildung bleibt auf
    dem Rechner.
-4. **Weich löschen, nie hart.** Löschen setzt ein Datumsfeld (`geloeschtAm`,
-   im Datenvertrag und in den Fixtures `deleted_at`), es entfernt keinen
-   Datensatz. Jede Leseabfrage auf Nutzdaten filtert es heraus.
+4. **Weich löschen, nie hart.** Löschen setzt ein Datumsfeld, es entfernt keinen
+   Datensatz. Im Swift-Modell heißt es **`geloeschtAm`**; in den Fixtures steht
+   dafür `deleted_at` beziehungsweise `deletedAt` (Zuordnungstabelle in
+   [`contracts/README.md`](contracts/README.md)).
+   Jede Leseabfrage auf Nutzdaten filtert es heraus.
    Papierkorb-Abfragen sind eigene Repository-Methoden, keine Variante mit
    Schalter.
 5. **Ein Sitzplatz heißt `<objektId>__sitz_<n>`.** Vertrag zwischen
@@ -55,8 +57,8 @@ unabhängiges Produkt; er teilt mit diesem Repository keine Daten. Warum:
 
 Zwei lokale Pakete, damit die Grenze geprüft wird statt begutachtet:
 
-```
-Pakete/SitzplanKern      plattformneutral, kein Apple-Framework
+```text
+Pakete/SitzplanKern      plattformneutral, nur Sprache und Foundation
 ├── Domain               Modelle, Dokumente, Regeln, Fehler, Protokolle
 ├── Datenvertrag         Mapping Dokument ↔ Domäne, Toleranzen
 └── Core                 Konfiguration, Logging

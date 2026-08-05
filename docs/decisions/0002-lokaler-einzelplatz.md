@@ -78,8 +78,14 @@ nichts.
 Was bleibt, sind die **Dokumentverträge**: `RaumDokument` und `PlanDokument`
 in den Versionen 3 und 1, die Sitzplatzkennung `<objektId>__sitz_<n>`, die
 Rasterrechnung in Zentimetern, die Möbelmaße, das tolerante Lesen alter
-Dokumente und das strenge Schreiben aktueller, `deleted_at` als einziger
-Löschmechanismus.
+Dokumente und das strenge Schreiben aktueller sowie weiches Löschen über ein
+Datumsfeld als einzigen Löschmechanismus.
+
+Dieses Feld heißt im Speicher **`geloeschtAm`**. `deleted_at` und `deletedAt`
+sind die Schreibweisen in den Fixtures und stammen aus der Zeit des gemeinsamen
+Backends; sie bezeichnen dieselbe Sache. Wer `deleted_at` für einen Feldnamen im
+Swift-Modell hält, modelliert am Vertrag vorbei — die Zuordnung steht in
+[`contracts/README.md`](../../contracts/README.md).
 
 Ihre Rolle ändert sich: Sie sind nicht mehr der geteilte Vertrag zwischen
 zwei Clients, sondern die **Verhaltensspezifikation dieses Repositories**. Sie

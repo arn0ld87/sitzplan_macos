@@ -138,7 +138,7 @@ zurückgesetzt. Unbekannte `typ`-Werte werden beim Lesen zu `einzeltisch`.
 
 ## Sitzplatzkennung
 
-```
+```text
 <objektId>__sitz_<n>        n beginnt bei 1
 ```
 
@@ -155,7 +155,7 @@ Sitzplätze werden aus dem Möbelstück abgeleitet, nicht frei vergeben. Die Lag
 auf dem Möbelstück, in Zentimetern relativ zur linken oberen Ecke, **vor** jeder
 Drehung:
 
-```
+```text
 lokalX_cm = breite * (i + 0.5) / anzahl        i = 0 … anzahl-1
 lokalY_cm = tiefe / 2
 bezeichnung = "Platz \(i + 1)"
@@ -196,7 +196,7 @@ Plätzen, gewinnt bei der Regelprüfung ebenfalls der zuletzt eingetragene Platz
 
 ## Rasterrechnung
 
-```
+```text
 RASTER_STANDARD = 25
 rasterWeite(r)  = r ?? 25, und auch bei 0 → 25
 aufRasterRunden(wert, raster) = round(wert / raster) * raster
@@ -208,10 +208,14 @@ weicht das ab. Swift muss `(wert / raster).rounded(.toNearestOrAwayFromZero)`
 also **nicht** verwenden, sondern `floor(x + 0.5)`.
 
 > **Widerspruch im Bestand.** `RASTER_STANDARD` ist 25, der Rückfallwert in
-> `ausPlanDokument` ist aber 10, und die Datenbank verlangt nur `>= 5`. Ein Plan
-> ohne `rasterCm` bekommt damit 10, ein Raum ohne Rasterangabe 25. Der
-> macOS-Client übernimmt beide Werte unverändert, damit er dieselben Dokumente
-> gleich liest. Aufgelöst gehört das im Web-Repo, nicht hier — als eigenes Issue.
+> `ausPlanDokument` ist aber 10. Ein Plan ohne `rasterCm` bekommt damit 10, ein
+> Raum ohne Rasterangabe 25. Beide Werte gelten hier unverändert weiter, damit
+> dieselben Dokumente gleich gelesen werden — die Fixtures halten sie fest.
+>
+> Aufgelöst wird das **in diesem Repository** (siehe „Bekannte Widersprüche“
+> unten), nicht im Web-Repo: Seit ADR-0002 ist `sitzplan_app` ein unabhängiges
+> Produkt und nur noch Lesequelle. Dass dieselbe Unstimmigkeit dort weiterlebt,
+> ist nicht mehr unsere Sache.
 
 ## Soft-Delete
 

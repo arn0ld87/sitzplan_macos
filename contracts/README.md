@@ -21,7 +21,7 @@ deshalb weiter in ausführbarer Form vor, statt nur in Prosa.
 
 ## Was hier liegt
 
-```
+```text
 contracts/
 ├── README.md          dieses Dokument
 └── fixtures/          plattformneutrale JSON-Fälle, gelesen von den Swift-Tests
@@ -42,8 +42,27 @@ Dokumentformats.
 
 Die Fälle zu Soft-Delete und Sitzregeln beschreiben fachliches Verhalten und
 gelten unverändert, obwohl es keine Datenbankzeilen mehr gibt, aus denen sie
-einst stammten. Weich gelöscht wird lokal genauso wie vorher am Server; das
-Datumsfeld heißt in Swift `geloeschtAm`, seine Regeln sind dieselben.
+einst stammten. Weich gelöscht wird lokal genauso wie vorher am Server, nur
+heißt das Feld anders.
+
+### Feldnamen in den Fixtures
+
+Die Fixtures tragen die Schreibweisen aus der Zeit des gemeinsamen Backends. Sie
+werden **nicht** umbenannt — eine Fixture zu ändern hieße, den Vertrag zu
+ändern. Verbindlich ist deshalb diese Zuordnung:
+
+| in der Fixture | im Swift-Modell | wo |
+| --- | --- | --- |
+| `deleted_at` | `geloeschtAm` | Klassen und Schüler in `soft-delete-faelle.json` |
+| `deletedAt` | `geloeschtAm` | Papierkorb-Einträge in `soft-delete-faelle.json` |
+| `klasse_id` | `klasse` (Beziehung) bzw. `klasseId` | Schüler und Sitzregeln |
+| `vorname`, `nachname` | gleich | Schüler |
+| `art` (`nicht_neben`, `muss_neben`) | `Regelart` | Sitzregeln |
+
+Dass dieselbe Sache in derselben Datei zweimal verschieden geschrieben ist
+(`deleted_at` gegen `deletedAt`), ist gewachsen und keine Absicht. Wer die
+Fixtures liest, muss beide Formen bedienen; wer Swift schreibt, kennt nur
+`geloeschtAm`.
 
 ## Quelle der Wahrheit
 
@@ -56,7 +75,7 @@ nicht nebenbei, um einen roten Test grün zu bekommen.
 
 Der Web-Client bleibt eine nützliche **Lesequelle**: Wo dieses Dokument, die
 Fixtures und `docs/datenvertrag.md` eine Frage offenlassen, zeigt
-`sitzplan_app/src/data/`, wie dieselben Dokumente dort behandelt werden.
+`../sitzplan_app/src/data/`, wie dieselben Dokumente dort behandelt werden.
 Verbindlich ist er nicht mehr. Geändert wird dort nichts.
 
 ## Regeln

@@ -7,7 +7,7 @@ mit lokalem Speicher, ohne Konto und ohne Server.
 
 ## Projektschnitt
 
-```
+```text
 sitzplan_macos/
 ├─ SitzplanStudio.xcodeproj          App-Target + XCUITest
 ├─ SitzplanStudio/
@@ -34,7 +34,7 @@ erzwingt.
 
 ## Grenzen
 
-```
+```text
 Domain        ──kennt──▶  nichts
 Datenvertrag  ──kennt──▶  Domain
 Core          ──kennt──▶  nichts

@@ -7,7 +7,7 @@ werden hier nicht gespiegelt, weil eine Kopie mit Sicherheit veraltet.
 
 Labels, angelehnt an das Web-Repo:
 
-```
+```text
 typ: feature · typ: architecture · typ: test · typ: chore · typ: fix · typ: docs
 bereich: domain · bereich: data · bereich: ui · bereich: editor
 bereich: ci · bereich: security · bereich: ki
