@@ -59,8 +59,16 @@ Server, kein Datenaustausch mit dem Web-Client.
 
 SwiftData ist der Speicher, der `ModelContainer` liegt unter
 `~/Library/Application Support/SitzplanStudio/`. Es gibt kein Supabase-SDK im
-Projekt, keinen Publishable Key, keine RLS, keine Migrationen, keinen
+Projekt, keinen Publishable Key, keine RLS, keine Servermigrationen, keinen
 Anmeldebildschirm.
+
+**Schemaentwicklung verschwindet damit nicht, sie zieht um.** Was früher eine
+SQL-Migration war, ist jetzt ein `VersionedSchema` mit `SchemaMigrationPlan` in
+`SitzplanSpeicher`. Wer einen `@Model`-Typ ändert, ohne das mitzuplanen, macht
+die Datenbank der Lehrkraft unlesbar — und anders als früher gibt es keinen
+Server, von dem sie sich neu laden ließe. Das ist der Preis dafür, dass die
+Daten nur einmal existieren, und er ist ab dem ersten ausgelieferten Build
+fällig.
 
 Der einzige ausgehende Netzaufruf der Anwendung ist der KI-Aufruf, und den
 löst die Lehrkraft ausdrücklich aus. Alles andere — Start, Laden, Speichern,

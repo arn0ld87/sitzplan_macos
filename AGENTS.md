@@ -12,8 +12,14 @@ unabhängiges Produkt; er teilt mit diesem Repository keine Daten. Warum:
 ## Hartanker — nicht verhandelbar
 
 1. **Kein Backend.** SwiftData, lokal. Kein Supabase-SDK, kein Konto, keine
-   Anmeldung, keine RLS, keine Migrationen, kein Import aus dem Web-Client und
-   keine Synchronisation. Wer eines davon einführt, braucht ein eigenes ADR.
+   Anmeldung, keine RLS, keine Servermigrationen, kein Import aus dem
+   Web-Client und keine Synchronisation. Wer eines davon einführt, braucht ein
+   eigenes ADR.
+
+   Nicht gemeint sind **lokale Schema-Migrationen**: Eine Änderung an einem
+   `@Model`-Typ braucht ein `VersionedSchema` und einen `SchemaMigrationPlan`.
+   Ohne das zerreißt die Datenbank der Lehrkraft, und es gibt keinen Server, von
+   dem sie sich neu laden ließe.
 2. **Kein Netzaufruf außer dem KI-Aufruf.** Genau ein ausgehender Aufruf ist
    erlaubt: der an Gemini, ausdrücklich von der Lehrkraft ausgelöst. Kein
    Telemetrie-Ping, keine Aktualisierungsprüfung, kein Schriftart- oder

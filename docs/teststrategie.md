@@ -70,7 +70,13 @@ XCUITest nur für Abläufe, deren Bruch sofort auffallen muss:
 - Druckansicht lässt sich erzeugen
 
 Diese Tests laufen gegen einspeisbare Fake-Repositories oder einen
-In-Memory-Speicher, nie gegen die Datenbank der Benutzerin.
+In-Memory-Speicher — **nie** gegen die Datenbank der Benutzerin.
+
+Der Neustarttest ist die eine Ausnahme, und zwar notwendigerweise: Ein
+In-Memory-Speicher vergisst absichtlich alles und kann nicht belegen, dass etwas
+einen Neustart übersteht. Er bekommt deshalb einen eigenen, isolierten Speicher
+in einem temporären Verzeichnis, der nach dem Lauf gelöscht wird. Der Weg dorthin
+wird der Anwendung eingespeist; er ist nie der voreingestellte Ablageort.
 
 ## Gates
 
@@ -96,6 +102,13 @@ Layout und Aussehen werden nicht automatisiert geprüft. Dafür gibt es das
 Designsystem und einen Blick. Snapshot-Tests der Oberfläche kosten mehr
 Pflege, als sie hier einbringen.
 
-Der KI-Aufruf selbst wird nicht gegen Gemini getestet. Geprüft werden
-Prompt-Bau, Pseudonymisierung und die Nachprüfung der Antwort — alles reine
-Funktionen, alle ohne Netz, alle im Linux-Job.
+Der KI-Aufruf selbst wird nicht gegen Gemini getestet — kein echter Aufruf in
+der CI, auf keiner Stufe.
+
+Ungetestet bleibt er trotzdem nicht. Weil er die **einzige** erlaubte
+Netzgrenze der Anwendung ist, gehört er hinter einen einspeisbaren Transport und
+wird gegen einen Fake geprüft: dass die Anfrage richtig gebaut wird, dass ohne
+hinterlegten Schlüssel gar nicht erst gerufen wird, und dass Zeitüberschreitung,
+Netzfehler und Fehlerantwort des Dienstes je zu einem typisierten Domänenfehler
+werden statt zu einem Absturz. Dazu die reinen Funktionen — Prompt-Bau,
+Pseudonymisierung, Nachprüfung der Antwort —, die ohne Netz im Linux-Job laufen.
