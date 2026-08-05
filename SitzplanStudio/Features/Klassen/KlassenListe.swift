@@ -26,6 +26,11 @@ public struct KlassenListe: View {
             detail
         }
         .task { await modell.laden() }
+        // Der Menübefehl ⌘N muss dasselbe tun wie die Schaltfläche in der
+        // Symbolleiste. Zwei Wege zur selben Aktion, ein Zustand.
+        .onReceive(NotificationCenter.default.publisher(for: .neueKlasse)) { _ in
+            legtAn = true
+        }
         .sheet(isPresented: $legtAn) {
             KlasseBearbeiten(titel: "Neue Klasse", name: "") { name in
                 await modell.anlegen(name: name)

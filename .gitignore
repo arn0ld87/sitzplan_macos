@@ -34,3 +34,10 @@ Package.resolved.bak
 # Werkzeuge
 .code-review-graph/
 *.log
+
+# Xcode
+*.xcuserdatad/
+xcuserdata/
+DerivedData/
+.build/
+.swiftpm/

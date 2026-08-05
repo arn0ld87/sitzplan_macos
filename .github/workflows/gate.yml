@@ -1,0 +1,79 @@
+# Zweistufiges Gate.
+#
+# Der macOS-Runner kostet den zehnfachen Multiplikator. Der groesste Teil der
+# Fachlogik — Dokumentformate, Toleranzen, Sitzplatzkennung, Rasterrundung,
+# Sitzregeln, Soft-Delete — braucht ihn nicht. Deshalb laeuft `SitzplanKern` bei
+# jedem Push auf Linux, und der teure Job nur am Pull Request.
+#
+# Der Linux-Job ist dabei mehr als billig: Er ist die einzige Stelle, an der die
+# Schichtengrenze zu SwiftData geprueft wird. `import SwiftData` in `Domain`
+# uebersetzt auf einem Mac anstandslos — erst hier faellt es auf. Wer diesen Job
+# abschaltet oder auf `continue-on-error` setzt, schafft die Grenze ab.
+#
+# Actions sind auf Commit-SHAs gepinnt, wie im Web-Repo.
+
+name: Gate
+
+on:
+  push:
+    branches: ["**"]
+  pull_request:
+    branches: [main]
+
+concurrency:
+  group: gate-${{ github.ref }}
+  cancel-in-progress: true
+
+permissions:
+  contents: read
+
+jobs:
+  kern:
+    name: Kern (Linux)
+    runs-on: ubuntu-latest
+    container: swift:6.0
+    steps:
+      - name: Auschecken
+        uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7.0.1
+        with:
+          persist-credentials: false
+
+      - name: Paket aufloesen
+        working-directory: Pakete/SitzplanKern
+        run: swift package resolve
+
+      - name: Testen
+        working-directory: Pakete/SitzplanKern
+        run: swift test
+
+      - name: Belegen, dass Domain kein SwiftData kennt
+        # Doppelter Boden: Der Linux-Build faellt bei einem SwiftData-Import
+        # ohnehin um, aber eine ausdrueckliche Suche sagt im Log, warum.
+        run: |
+          if grep -rn "import SwiftData" Pakete/SitzplanKern/Sources/; then
+            echo "::error::SwiftData gehoert nicht in SitzplanKern (ADR-0002, AGENTS.md Schichtengrenzen)"
+            exit 1
+          fi
+          echo "SitzplanKern ist frei von SwiftData."
+
+  app:
+    name: App (macOS)
+    runs-on: macos-26
+    if: github.event_name == 'pull_request'
+    steps:
+      - name: Auschecken
+        uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7.0.1
+        with:
+          persist-credentials: false
+
+      - name: Speicher testen
+        working-directory: Pakete/SitzplanSpeicher
+        run: swift test
+
+      - name: App bauen und Oberflaeche testen
+        run: |
+          xcodebuild \
+            -project SitzplanStudio.xcodeproj \
+            -scheme SitzplanStudio \
+            -destination 'platform=macOS' \
+            clean build test
