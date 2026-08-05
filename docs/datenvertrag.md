@@ -1,20 +1,26 @@
-# Datenvertrag — was beide Clients gleich verstehen müssen
+# Datenvertrag — wie diese Anwendung Daten liest und schreibt
 
-Stand: 2026-08-01. Tatsachenquelle ist der Code des Web-Clients
-(`sitzplan_app`), nicht dieses Dokument. Wo beides auseinanderläuft, gewinnt der
-Code — und dieses Dokument wird korrigiert.
+Stand: 2026-08-05. Verbindlich sind dieses Dokument und die Fixtures unter
+`contracts/fixtures/`. Weicht der Swift-Code ab, ist der Code falsch, bis das
+Gegenteil entschieden ist.
 
-Maßgeblich im Web-Repo:
+Die Formate stammen aus dem Web-Client, wo sie seit Längerem in Gebrauch und in
+TypeScript geprüft sind. Seit [ADR-0002](decisions/0002-lokaler-einzelplatz.md)
+teilen die beiden Anwendungen keine Daten mehr; die Formate bleiben trotzdem,
+weil sie erprobt und in jedem Randfall festgelegt sind. Was hier steht, gilt
+deshalb nicht länger, weil ein Server es erzwingt, sondern weil es entschieden
+ist.
 
-| Was | Datei |
+Der Web-Client bleibt eine **Lesequelle** für Fragen, die dieses Dokument
+offenlässt. Geändert wird dort nichts:
+
+| Was | Datei in `sitzplan_app` |
 | --- | --- |
 | Domänentypen, Geometrie, `seatId` | `src/data/types.ts` |
-| Zeilen ↔ Domäne, Dokumentformate | `src/data/mapping.ts` |
-| Zeilen zu Anwendungsdaten, Papierkorb | `src/data/laden.ts` |
-| Soft-Delete-Filter | `src/data/papierkorb.ts` |
+| Dokumentformate, Mapping | `src/data/mapping.ts` |
+| Papierkorb, Soft-Delete-Filter | `src/data/laden.ts`, `src/data/papierkorb.ts` |
 | Regelprüfung | `src/data/sitzregeln.ts` |
 | Rasterrechnung | `src/lib/raster.ts` |
-| Schema und RLS | `supabase/migrations/*.sql` |
 
 ## Grundsätze
 
@@ -24,42 +30,51 @@ Maßgeblich im Web-Repo:
    Dokumente dürfen nie zum Absturz führen; geschrieben wird nur Vollständiges
    und Kanonisches.
 3. **Unbekannte Felder sind kein Fehler.** Sie werden beim Lesen übergangen.
-4. **`deleted_at IS NULL` in jeder Leseabfrage auf Nutzdaten.** Papierkorb-
-   Abfragen sind ausdrücklich eigene Methoden, keine Variante mit Schalter.
-5. **RLS ist die Autorisierungsgrenze.** Der Client filtert zusätzlich, weil es
-   fachlich richtig ist, nicht weil es ihn schützt.
+4. **Weich gelöschtes bleibt draußen.** `geloeschtAm` gesetzt heißt: nicht in
+   der Liste. Papierkorb-Abfragen sind ausdrücklich eigene Methoden, keine
+   Variante mit Schalter.
+5. **Das Dokument ist ein Wert.** Es wird als Ganzes gelesen und als Ganzes
+   geschrieben, nie teilweise fortgeschrieben. Wer ein einzelnes Feld ändern
+   will, liest, ändert und schreibt zurück.
 
-## Tabellen
+## Modelle
 
-Sechs Tabellen. Jede hat `id uuid`, `user_id uuid NOT NULL REFERENCES
-auth.users ON DELETE CASCADE`, `created_at`, `updated_at`, `deleted_at
-timestamptz NULL`, den Trigger `set_updated_at` und vier RLS-Policies gegen
-`auth.uid()`.
+Sechs `@Model`-Typen in `Pakete/SitzplanSpeicher`. Jeder hat `id: UUID`,
+`erstelltAm: Date`, `geaendertAm: Date` und `geloeschtAm: Date?`. Kein
+`user_id`: Es gibt genau einen Datenbestand, der der Person gehört, die vor dem
+Rechner sitzt.
 
-| Tabelle | Fachspalten |
+| Modell | Fachliche Felder |
 | --- | --- |
-| `klassen` | `name text`, `notizen text NULL` |
-| `schueler` | `klasse_id`, `vorname`, `nachname`, `initialen`, `farb_index int CHECK 0..7` |
-| `sitzregeln` | `klasse_id`, `schueler_a`, `schueler_b`, `art CHECK IN ('nicht_neben','muss_neben')` |
-| `raeume` | `name`, `breite_cm numeric CHECK > 0`, `laenge_cm numeric CHECK > 0`, `raster_cm numeric CHECK >= 5`, `canvas_document jsonb`, `dokument_version int DEFAULT 3` |
-| `sitzplaene` | `klasse_id`, `raum_id`, `name`, `status CHECK IN ('entwurf','aktiv','archiv')`, `canvas_document jsonb NOT NULL`, `revision int DEFAULT 1`, `dokument_version int DEFAULT 1` |
-| `sitzplan_versionen` | `sitzplan_id`, `name`, `canvas_document jsonb` |
+| `KlassenEintrag` | `name: String`, `notizen: String?` |
+| `SchuelerEintrag` | `klasse`, `vorname`, `nachname`, `initialen`, `farbIndex: Int` (0…7) |
+| `SitzregelEintrag` | `klasse`, `schuelerA`, `schuelerB`, `art: Regelart` |
+| `RaumEintrag` | `name`, `breiteCm: Double`, `laengeCm: Double`, `rasterCm: Double`, `dokument: RaumDokument`, `dokumentVersion: Int` (3) |
+| `SitzplanEintrag` | `klasse`, `raum`, `name`, `status: Planstatus`, `dokument: PlanDokument`, `dokumentVersion: Int` (1) |
+| `SitzplanVersionEintrag` | `sitzplan`, `name`, `dokument: PlanDokument` |
 
-`schueler`, `sitzregeln` und `sitzplaene` haben zusätzlich eine RLS-Bedingung
-über die zugehörige Klasse: Es genügt nicht, dass `user_id` stimmt — die Klasse
-muss ebenfalls dem Konto gehören. Der macOS-Client muss dazu nichts tun, aber
-er muss wissen, dass ein Schreibvorgang mit fremder `klasse_id` scheitert,
-statt still nichts zu tun.
+Was in PostgreSQL ein `CHECK` war, ist in Swift ein Aufzählungstyp:
+`Regelart` mit `nichtNeben` und `mussNeben`, `Planstatus` mit `entwurf`,
+`aktiv` und `archiv`. Was dort ein Fremdschlüssel war, ist hier eine
+SwiftData-Beziehung. Beides prüft der Compiler, nicht die Datenbank.
 
-Numerische Maße kommen als `numeric` aus PostgreSQL. PostgREST liefert sie je
-nach Wert als Zahl oder als Zeichenkette; der Web-Client wickelt sie deshalb in
-`Number(...)`. Swift muss dasselbe tun und beide Formen dekodieren.
+Die Wertebereiche bleiben Vertrag und werden im `Domain`-Modul geprüft, nicht
+im Speicher: `breiteCm` und `laengeCm` größer als 0, `rasterCm` mindestens 5,
+`farbIndex` zwischen 0 und 7. Eine lokale Datenbank hat keinen Server, der
+ungültige Werte abweist — die Prüfung ist damit nicht weniger nötig, sondern
+nur woanders.
+
+> **Historisch.** Bis ADR-0002 lagen dieselben Daten in sechs Supabase-Tabellen
+> mit `user_id`, `deleted_at`, `set_updated_at`-Trigger und vier RLS-Policies je
+> Tabelle; numerische Maße kamen als `numeric` und mussten je nach Wert als Zahl
+> **oder** Zeichenkette dekodiert werden. Beides entfällt. Wer die alten
+> Fixtures liest, trifft die Feldnamen dort weiterhin an.
 
 ## Dokumentformate
 
-Geometrie liegt nicht relational, sondern als JSONB in `canvas_document`.
+Geometrie liegt nicht in Einzelfeldern, sondern als Dokument am Modell.
 
-### RaumDokument (`raeume.canvas_document`, Version 3)
+### RaumDokument (`RaumEintrag.dokument`, Version 3)
 
 ```json
 {
@@ -74,9 +89,9 @@ Geometrie liegt nicht relational, sondern als JSONB in `canvas_document`.
 }
 ```
 
-Der Vorgabewert der Spalte ist `{"objekte": [], "sitzplaetze": []}`.
+Der Vorgabewert ist `{"objekte": [], "sitzplaetze": []}`.
 
-### PlanDokument (`sitzplaene.canvas_document`, Version 1)
+### PlanDokument (`SitzplanEintrag.dokument`, Version 1)
 
 ```json
 {
@@ -123,7 +138,7 @@ zurückgesetzt. Unbekannte `typ`-Werte werden beim Lesen zu `einzeltisch`.
 
 ## Sitzplatzkennung
 
-```
+```text
 <objektId>__sitz_<n>        n beginnt bei 1
 ```
 
@@ -140,7 +155,7 @@ Sitzplätze werden aus dem Möbelstück abgeleitet, nicht frei vergeben. Die Lag
 auf dem Möbelstück, in Zentimetern relativ zur linken oberen Ecke, **vor** jeder
 Drehung:
 
-```
+```text
 lokalX_cm = breite * (i + 0.5) / anzahl        i = 0 … anzahl-1
 lokalY_cm = tiefe / 2
 bezeichnung = "Platz \(i + 1)"
@@ -168,7 +183,7 @@ Mehrfache Zuordnungen auf denselben Sitzplatz: Der **letzte** Eintrag gewinnt,
 weil die Liste in ein Wörterbuch überführt wird. Steht ein Schüler auf mehreren
 Plätzen, gewinnt bei der Regelprüfung ebenfalls der zuletzt eingetragene Platz.
 
-> **Fallstrick für Swift.** „Der letzte gewinnt" setzt eine Reihenfolge voraus.
+> **Fallstrick für Swift.** „Der letzte gewinnt“ setzt eine Reihenfolge voraus.
 > JavaScript-Objekte mit Zeichenkettenschlüsseln behalten die Einfügereihenfolge,
 > ein Swift-`Dictionary` nicht. Wird `zuordnungen` in Swift direkt in ein
 > `[String: String]` überführt, ist das Ergebnis bei doppelten Einträgen
@@ -181,7 +196,7 @@ Plätzen, gewinnt bei der Regelprüfung ebenfalls der zuletzt eingetragene Platz
 
 ## Rasterrechnung
 
-```
+```text
 RASTER_STANDARD = 25
 rasterWeite(r)  = r ?? 25, und auch bei 0 → 25
 aufRasterRunden(wert, raster) = round(wert / raster) * raster
@@ -193,10 +208,14 @@ weicht das ab. Swift muss `(wert / raster).rounded(.toNearestOrAwayFromZero)`
 also **nicht** verwenden, sondern `floor(x + 0.5)`.
 
 > **Widerspruch im Bestand.** `RASTER_STANDARD` ist 25, der Rückfallwert in
-> `ausPlanDokument` ist aber 10, und die Datenbank verlangt nur `>= 5`. Ein Plan
-> ohne `rasterCm` bekommt damit 10, ein Raum ohne Rasterangabe 25. Der
-> macOS-Client übernimmt beide Werte unverändert, damit er dieselben Dokumente
-> gleich liest. Aufgelöst gehört das im Web-Repo, nicht hier — als eigenes Issue.
+> `ausPlanDokument` ist aber 10. Ein Plan ohne `rasterCm` bekommt damit 10, ein
+> Raum ohne Rasterangabe 25. Beide Werte gelten hier unverändert weiter, damit
+> dieselben Dokumente gleich gelesen werden — die Fixtures halten sie fest.
+>
+> Aufgelöst wird das **in diesem Repository** (siehe „Bekannte Widersprüche“
+> unten), nicht im Web-Repo: Seit ADR-0002 ist `sitzplan_app` ein unabhängiges
+> Produkt und nur noch Lesequelle. Dass dieselbe Unstimmigkeit dort weiterlebt,
+> ist nicht mehr unsere Sache.
 
 ## Soft-Delete
 
@@ -219,36 +238,36 @@ Filter:
 Diese Regel ist der Grund, warum ein Klassen-Papierkorb überhaupt Schüler
 enthält. Wer sie beim Portieren übersieht, baut Datenverlust ein.
 
-## Konflikterkennung beim Speichern
+## Speichern
 
-Der Bestand gibt Folgendes her:
+Es gibt keinen Serverkonflikt mehr. Ein Datenbestand, ein Prozess, ein Nutzer —
+niemand schreibt gleichzeitig von woanders. Optimistisches Sperren über
+`updated_at`, das `revision`-Feld und die Frage, wessen Stand neuer ist,
+entfallen mit dem Backend.
 
-- **`updated_at` existiert auf allen sechs Tabellen** und wird per Trigger
-  gepflegt. Damit ist optimistisches Sperren ohne Migration möglich: beim Laden
-  merken, beim Schreiben als Bedingung mitgeben, bei null betroffenen Zeilen
-  liegt ein Serverkonflikt vor.
-- **`sitzplaene.revision` ist dafür unbrauchbar.** Die Spalte existiert, aber
-  `planZuRow` schreibt sie hart auf `1`; sie wird nie hochgezählt.
-- Die TypeScript-Zeilentypen führen `updated_at` nur bei `PlanRow` und dort
-  optional. Der macOS-Client nimmt es überall mit auf — das ist eine Ergänzung
-  am Client, keine Schemaänderung.
+Was bleibt:
 
-Verbindlich: **keine undokumentierte Last-Write-Wins-Strategie.** Ein
-Speicherfehler darf Benutzeränderungen nie still verwerfen. Die Zustände sind
-in `docs/architektur.md` festgelegt.
+- **Ein Speicherfehler verwirft nie eine Benutzeränderung.** Schlägt das
+  Schreiben fehl — Platte voll, Datei nicht schreibbar, Datenbank beschädigt —,
+  wird das gemeldet und die Änderung bleibt bearbeitbar. Die Zustände stehen in
+  [`architektur.md`](architektur.md).
+- **`geaendertAm` wird beim Schreiben gesetzt**, nicht von einem Trigger. Es
+  dient der Anzeige und der Sortierung, nicht der Konflikterkennung.
+- **Zwei Fenster auf demselben Bestand** sind der einzig verbliebene
+  Gleichzeitigkeitsfall. Er wird über einen gemeinsamen `ModelContext` gelöst,
+  nicht über Versionsvergleiche.
 
-## Bekannte Lücken im Bestand
+## Bekannte Widersprüche
 
-Festgestellt bei der Analyse am 2026-08-01, nicht im Rahmen von M0 verändert:
+1. **Rasterrückfall 10 gegen `RASTER_STANDARD` 25** (siehe oben). Der einzige
+   Punkt der alten Liste, der weiterlebt: Er steckt nicht im Schema, sondern im
+   Dokumentformat, und die Fixtures halten ihn fest. Zu entscheiden, bevor der
+   Sitzplaneditor entsteht — eigenes Issue.
+2. **`SitzplanVersionEintrag` ist vorgesehen, aber ungenutzt.** Das Modell
+   steht im Vertrag, weil das Dokumentformat es hergibt; gebaut wird es erst,
+   wenn Plan-Versionen ein Merkmal werden.
 
-1. Rasterrückfall 10 gegen `RASTER_STANDARD` 25 (siehe oben).
-2. `sitzplaene.revision` wird nie erhöht.
-3. `sitzplan_versionen` hat eine Tabelle samt RLS, aber keine Entsprechung in
-   `mapping.ts` — der Web-Client schreibt und liest sie derzeit nicht.
-4. `SchuelerRow` und `SitzregelRow` führen kein `created_at`, obwohl die
-   Datenbank es hat.
-5. `rowZuPlan` setzt `updated` notfalls auf die **aktuelle Uhrzeit**, wenn weder
-   `updated_at` noch `deleted_at` vorliegen. Das erzeugt bei jedem Laden einen
-   anderen Wert und taugt nicht als Vergleichsgrundlage.
-
-Punkte 1, 2 und 5 berühren die Konfliktstrategie und gehören vor M4 geklärt.
+Erledigt mit ADR-0002: `sitzplaene.revision`, das nie erhöht wurde; fehlende
+`created_at`-Felder in den Zeilentypen; `rowZuPlan`, das `updated` notfalls auf
+die aktuelle Uhrzeit setzte. Alle drei betrafen das Zusammenspiel mit dem
+Server und haben ohne ihn keinen Gegenstand mehr.

@@ -1,68 +1,90 @@
 # Teststrategie
 
-Der Zweck ist eng: verhindern, dass TypeScript und Swift dieselben Daten
-unterschiedlich verstehen. Alles andere ist nachrangig.
+Der Zweck ist eng: verhindern, dass die Anwendung Dokumente anders liest oder
+schreibt, als der Datenvertrag es festlegt. Alles andere ist nachrangig.
+
+Der Schnitt folgt daraus, nicht umgekehrt: Was ohne Oberfläche und ohne
+Datenbank prüfbar ist, liegt in `Pakete/SitzplanKern` und läuft auf Linux. Der
+Mac-Runner ist zehnmal so teuer und bleibt dem vorbehalten, was ihn wirklich
+braucht.
 
 ## Werkzeuge
 
 | Zweck | Werkzeug |
 | --- | --- |
 | Unit- und Vertragstests | Swift Testing (`@Test`, `#expect`) |
+| Speichertests | Swift Testing gegen einen In-Memory-`ModelContainer` |
 | Oberflächenabläufe | XCUITest |
-| Web-Gegenprobe | Vitest im Repo `sitzplan_app` |
 
-## Was geprüft wird
+## Was im Linux-Job geprüft wird
 
-Vertragstests, gegen die gemeinsamen Fixtures:
+Ohne Oberfläche, ohne Datenbank, gegen die Fixtures aus `contracts/fixtures/`:
 
-- DTO → Domäne und Domäne → DTO, in beide Richtungen
-- tolerantes Lesen alter und unvollständiger Dokumente
-- strenges, kanonisches Schreiben
-- Dokumentversionen
-- `seatId` und die Zerlegung einer Sitzplatzkennung, samt der ungültigen Fälle
-  (`__sitz_007`, `__sitz_1e3`, fehlender Trenner)
-- Rasterrundung, einschließlich negativer Werte und halber Schritte
-- Möbelmaße aus der Tabelle statt aus dem Dokument
-- Konfliktprüfung der Sitzregeln
-- Soft-Delete-Filter, einschließlich des Klassenfalls mit identischem
-  Zeitstempel
-- eingefrorene Raumkopie
-- Speicherkonflikte über `updated_at`
-- Abbildung von Server- und Netzfehlern auf Domänenfehler
+| Prüft | Grundlage |
+| --- | --- |
+| Rundreise Dokument → Domäne → Dokument | `raum-dokument-v3.json`, `plan-dokument-v1.json` |
+| Toleranzen beim Lesen, Altfälle | `plan-dokument-alt-unvollstaendig.json` |
+| `seatId` bauen und zerlegen, kanonische Form | `datenvertrag.md` |
+| Rasterrundung, auch negativ und halb | `datenvertrag.md`, Vorlage `raster.ts` |
+| Reihenfolge bei doppelten Zuordnungen | geordnete Liste, nicht `Dictionary` |
+| Sitzregeln und Regelverstöße | `sitzregeln-konflikte.json` |
+| Soft-Delete-Filter und Wiederherstellen | `soft-delete-faelle.json` |
 
-## Gemeinsame Fixtures
+Dazu: strenges, kanonisches Schreiben; Dokumentversionen; Möbelmaße aus der
+Tabelle statt aus dem Dokument; die ungültigen Sitzplatzkennungen
+(`__sitz_007`, `__sitz_1e3`, fehlender Trenner); Abbildung von Speicher- und
+Dekodierfehlern auf typisierte Domänenfehler.
 
-Plattformneutrale JSON-Dateien unter `contracts/fixtures/`. Beide Testsuiten
-lesen dieselben Dateien.
+## Was im macOS-Job geprüft wird
 
-Quelle der Wahrheit ist das Web-Repo `sitzplan_app`, weil dort Schema,
-Migrationen und die Referenzimplementierung liegen. Dieses Repo hält eine Kopie;
-die CI vergleicht beide und wird rot, wenn sie abweichen. Wer eine Fixture
-ändert, ändert sie zuerst dort.
+- Repository-Rundreise gegen einen In-Memory-`ModelContainer`: anlegen, lesen,
+  ändern, weich löschen, wiederherstellen.
+- Der Klassenfall aus dem Soft-Delete-Vertrag: Eine gelöschte Klasse trägt ihre
+  Schüler mit identischem Zeitstempel, ein vorher einzeln gelöschter Schüler
+  bleibt gelöscht.
+- Dass das Dokument als Wert am Modell die Rundreise durch SwiftData übersteht.
 
-Fixtures enthalten ausschließlich erfundene Namen — dieselben wie im
-Designsystem. Echte Schülerdaten gehören unter keinen Umständen hinein.
+## Fixtures
+
+Plattformneutrale JSON-Dateien unter `contracts/fixtures/`, gelesen als
+Ressourcen des Testtargets von `SitzplanKern`.
+
+Sie sind die **Verhaltensspezifikation dieses Repositories**, keine Kopie und
+kein Abgleichsgegenstand mehr; der früher geplante CI-Vergleich gegen
+`sitzplan_app` entfällt mit
+[ADR-0002](decisions/0002-lokaler-einzelplatz.md). Eine Fixture zu ändern heißt,
+das Verhalten der Anwendung zu ändern — eigener Pull Request, eigene
+Begründung.
+
+Fixtures enthalten ausschließlich erfundene Namen. Echte Schülerdaten gehören
+unter keinen Umständen hinein.
 
 ## Oberflächentests
 
 XCUITest nur für Abläufe, deren Bruch sofort auffallen muss:
 
-- Anmeldemaske erscheint
-- Klassenansicht öffnet
-- Klasse lässt sich anlegen — gegen ein Test-Repository
+- Das Fenster erscheint und zeigt die Klassenliste
+- Eine Klasse lässt sich anlegen und ist nach einem Neustart noch da
 - Raumeditor öffnet
 - Kernaktionen sind über die Tastatur erreichbar
 - Druckansicht lässt sich erzeugen
 
-Diese Tests hängen **nie** an einem produktiven Supabase-Projekt. Sie laufen
-gegen einspeisbare Fake-Repositories, feste Fixtures und eine klar getrennte
-Testkonfiguration.
+Diese Tests laufen gegen einspeisbare Fake-Repositories oder einen
+In-Memory-Speicher — **nie** gegen die Datenbank der Benutzerin.
+
+Der Neustarttest ist die eine Ausnahme, und zwar notwendigerweise: Ein
+In-Memory-Speicher vergisst absichtlich alles und kann nicht belegen, dass etwas
+einen Neustart übersteht. Er bekommt deshalb einen eigenen, isolierten Speicher
+in einem temporären Verzeichnis, der nach dem Lauf gelöscht wird. Der Weg dorthin
+wird der Anwendung eingespeist; er ist nie der voreingestellte Ablageort.
 
 ## Gates
 
-macOS, verbindlich in der CI:
-
 ```bash
+# Kern — ubuntu-latest, bei jedem Push
+swift test --package-path Pakete/SitzplanKern
+
+# App — macos-26, nur pull_request gegen main
 xcodebuild \
   -project SitzplanStudio.xcodeproj \
   -scheme SitzplanStudio \
@@ -70,21 +92,23 @@ xcodebuild \
   clean build test
 ```
 
-Der genaue Befehl wird mit dem Xcode-Projekt in M1 festgelegt und in
-`README.md` dokumentiert. Lokal läuft er gegen Xcode 27 Beta, verbindlich grün
-ist der Lauf auf dem stabilen CI-Runner.
-
-Web, unverändert, sobald gemeinsame Verträge berührt sind:
-
-```bash
-bun run typecheck
-bun run lint
-bun run test
-bun run build
-```
+Lokal läuft der zweite Befehl gegen Xcode 27 Beta auf macOS 27 Beta.
+Verbindlich grün ist der Lauf in der CI; weicht der lokale Build ab, gewinnt
+die CI.
 
 ## Was nicht getestet wird
 
 Layout und Aussehen werden nicht automatisiert geprüft. Dafür gibt es das
 Designsystem und einen Blick. Snapshot-Tests der Oberfläche kosten mehr
 Pflege, als sie hier einbringen.
+
+Der KI-Aufruf selbst wird nicht gegen Gemini getestet — kein echter Aufruf in
+der CI, auf keiner Stufe.
+
+Ungetestet bleibt er trotzdem nicht. Weil er die **einzige** erlaubte
+Netzgrenze der Anwendung ist, gehört er hinter einen einspeisbaren Transport und
+wird gegen einen Fake geprüft: dass die Anfrage richtig gebaut wird, dass ohne
+hinterlegten Schlüssel gar nicht erst gerufen wird, und dass Zeitüberschreitung,
+Netzfehler und Fehlerantwort des Dienstes je zu einem typisierten Domänenfehler
+werden statt zu einem Absturz. Dazu die reinen Funktionen — Prompt-Bau,
+Pseudonymisierung, Nachprüfung der Antwort —, die ohne Netz im Linux-Job laufen.
