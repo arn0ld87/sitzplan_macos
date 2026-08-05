@@ -3,47 +3,80 @@
 Arbeitsanweisungen für KI-Agenten in diesem Repository. Gilt für alle Agenten.
 Antworten auf Deutsch, technische Bezeichner im Original.
 
-Dies ist der **macOS-Client** von Sitzplan Studio. Der Web-Client liegt in
-`sitzplan_app` und teilt sich mit diesem Repository ein Supabase-Projekt.
+Dies ist **Sitzplan Studio für macOS** — ein eigenständiges Produkt, das alle
+Daten lokal auf dem Rechner der Lehrkraft speichert. Kein Konto, keine
+Anmeldung, kein Server. Der Web-Client in `sitzplan_app` ist ein davon
+unabhängiges Produkt; er teilt mit diesem Repository keine Daten. Warum:
+[ADR-0002](docs/decisions/0002-lokaler-einzelplatz.md).
 
 ## Hartanker — nicht verhandelbar
 
-1. **Ein Backend.** Dasselbe Supabase-Projekt, dasselbe Schema, dieselben
-   Migrationen, dieselben RLS-Policies wie der Web-Client. Kein zweites Backend,
-   kein zweites Schema, kein eigenes Auth-System.
-2. **Nur Publishable Key.** Kein Service-Role-Key im Client, keine direkte
-   PostgreSQL-Verbindung, keine Umgehung von RLS.
-3. **`deleted_at IS NULL`** in jeder Leseabfrage auf Nutzdaten.
+1. **Kein Backend.** SwiftData, lokal. Kein Supabase-SDK, kein Konto, keine
+   Anmeldung, keine RLS, keine Migrationen, kein Import aus dem Web-Client und
+   keine Synchronisation. Wer eines davon einführt, braucht ein eigenes ADR.
+2. **Kein Netzaufruf außer dem KI-Aufruf.** Genau ein ausgehender Aufruf ist
+   erlaubt: der an Gemini, ausdrücklich von der Lehrkraft ausgelöst. Kein
+   Telemetrie-Ping, keine Aktualisierungsprüfung, kein Schriftart- oder
+   Symbolnachladen, kein Absturzbericht. Ohne hinterlegten Schlüssel ist die
+   Anwendung vollständig benutzbar und schweigt im Netz.
+3. **Der KI-Schlüssel gehört der Lehrkraft.** Er liegt in der Keychain — nie in
+   einer Einstellungsdatei, nie in einem xcconfig, nie im Repository, nie in
+   einem Log. Kein Schlüssel wird mitgeliefert. Schülernamen gehen
+   pseudonymisiert als `s1`, `s2` in den Prompt; die Rückabbildung bleibt auf
+   dem Rechner.
+4. **Weich löschen, nie hart.** Löschen setzt ein Datumsfeld (`geloeschtAm`,
+   im Datenvertrag und in den Fixtures `deleted_at`), es entfernt keinen
+   Datensatz. Jede Leseabfrage auf Nutzdaten filtert es heraus.
    Papierkorb-Abfragen sind eigene Repository-Methoden, keine Variante mit
    Schalter.
-4. **Ein Sitzplatz heißt `<objektId>__sitz_<n>`.** Vertrag zwischen
-   `canvas_document` und Oberfläche. Wer ihn ändert, macht bestehende
+5. **Ein Sitzplatz heißt `<objektId>__sitz_<n>`.** Vertrag zwischen
+   `RaumDokument` und Oberfläche. Wer ihn ändert, macht bestehende
    Zuordnungen unlesbar.
-5. **Keine personenbezogenen Schülerdaten** in Logs, Absturzausgaben, Fixtures,
+6. **Keine personenbezogenen Schülerdaten** in Logs, Absturzausgaben, Fixtures,
    Bildschirmfotos, Issues oder Commit-Nachrichten. `Logger` mit
    Privacy-Markierungen statt `print`.
-6. **Kein WebView, kein Electron, kein Catalyst.** AppKit nur punktuell und
+7. **Kein WebView, kein Electron, kein Catalyst.** AppKit nur punktuell und
    gekapselt, wo SwiftUI eine fachlich nötige Fähigkeit nicht trägt.
 
 ## Vor dem Ändern
 
 1. [`docs/datenvertrag.md`](docs/datenvertrag.md) lesen. Dort stehen die
-   Toleranzen beim Lesen, die Rasterrundung und die Fallstricke, an denen die
-   beiden Clients auseinanderlaufen.
-2. Bei Zweifeln über das Verhalten gilt der Code des Web-Clients in
-   `sitzplan_app/src/data/` als Tatsachenquelle — nicht die Dokumentation, auch
-   nicht diese.
-3. Schemafragen über die Migrationen in `sitzplan_app/supabase/migrations/`
-   klären, nicht über generierte Typen.
+   Toleranzen beim Lesen, die Rasterrundung und die Fallstricke, an denen eine
+   Portierung nach Swift schiefgeht.
+2. Verbindlich ist dieses Repository: `docs/datenvertrag.md` und die Fixtures
+   unter `contracts/fixtures/`. Sie sind die Verhaltensspezifikation, keine
+   Kopie mehr.
+3. Der Web-Client in `sitzplan_app/src/data/` bleibt eine **Lesequelle** für
+   Fragen, die Vertrag und Fixtures offenlassen — dort ist dasselbe
+   Dokumentformat seit Längerem in Gebrauch. Er ist nicht mehr verbindlich, und
+   in `sitzplan_app` wird **nichts** geändert.
 
 ## Schichtengrenzen
 
-- `Domain` kennt weder SwiftUI noch Supabase.
-- `Data` implementiert die Repository-Protokolle aus `Domain`.
+Zwei lokale Pakete, damit die Grenze geprüft wird statt begutachtet:
+
+```
+Pakete/SitzplanKern      plattformneutral, kein Apple-Framework
+├── Domain               Modelle, Dokumente, Regeln, Fehler, Protokolle
+├── Datenvertrag         Mapping Dokument ↔ Domäne, Toleranzen
+└── Core                 Konfiguration, Logging
+
+Pakete/SitzplanSpeicher  macOS-only
+└── Speicher             @Model-Typen, ModelContainer, Repository-Implementierungen
+```
+
+- `Domain` kennt weder SwiftUI noch SwiftData — nur Sprache und Foundation.
+  Achtung: Der Paketschnitt allein hält das **nicht** auf. SwiftData ist ein
+  System-Framework und lässt sich auf einem Mac aus jedem Target importieren.
+  Rot wird ein solcher Import erst im Linux-Job, wo es das Framework nicht
+  gibt. Dieser Job ist die Prüfstelle der Schichtengrenze, nicht bloß der
+  billige Lauf.
+- `Speicher` implementiert die Repository-Protokolle aus `Domain`.
 - `Features` benutzen Domänenmodelle und Protokolle.
-- Eine View greift **nie** direkt auf Supabase zu.
-- Zustandsänderungen der Oberfläche auf `@MainActor`; Netz- und Mapping-Arbeit
-  nicht.
+- Eine View greift **nie** direkt auf einen `ModelContext` oder einen
+  `@Model`-Typ zu.
+- Zustandsänderungen der Oberfläche auf `@MainActor`; Mapping- und
+  Speicherarbeit nicht.
 
 Unerwünscht: große `ContentView.swift`, universelles `AppViewModel`,
 Geschäftslogik in Views, globale veränderliche Singletons, untypisierte
@@ -51,8 +84,9 @@ Fehlerketten.
 
 ## Gestaltung
 
-`sitzplan_app/docs/designsystem.md` ist die Quelle der Wahrheit und wird
-**semantisch** übertragen, nicht pixelgenau. Wo eine Web-Vorgabe gegen eine
+`sitzplan_app/docs/designsystem.md` bleibt die gestalterische Quelle der
+Wahrheit — die Datentrennung ändert daran nichts. Übertragen wird
+**semantisch**, nicht pixelgenau. Wo eine Web-Vorgabe gegen eine
 macOS-Konvention steht, gewinnt die Konvention; die Bedeutung bleibt.
 
 Verboten: Dark Mode, Farbverläufe, Glassmorphism, Violett und Indigo, Rot für
@@ -69,30 +103,33 @@ SF Symbols statt Lucide, Bedeutung und Statussemantik bleiben erhalten.
 
 Barrierefreiheit gehört zur Definition of Done: VoiceOver-Beschriftungen,
 vollständige Tastaturbedienbarkeit, sichtbarer Fokus, Reduced Motion. Ziel
-WCAG 2.2 AA wie im Web-Client.
+WCAG 2.2 AA.
 
 ## Tests
 
 Swift Testing für Unit- und Vertragstests, XCUITest nur für kritische Abläufe.
-UI-Tests hängen nie an einem produktiven Supabase-Projekt — Fake-Repositories
-und feste Fixtures.
 
-Die Fixtures unter `contracts/fixtures/` sind eine **Kopie**. Quelle der
-Wahrheit ist `sitzplan_app/contracts/fixtures/`. Wer eine ändert, ändert sie
-zuerst dort.
+Was ohne Oberfläche und ohne Datenbank prüfbar ist, gehört nach
+`Pakete/SitzplanKern` — dort läuft es im billigen Linux-Job. Der Mac-Runner ist
+für Speicher und Oberfläche da, nicht für Fachlogik.
+
+Die Fixtures unter `contracts/fixtures/` sind die Verhaltensspezifikation
+dieses Repositories. Eine Fixture zu ändern heißt, das Verhalten der Anwendung
+zu ändern — eigener Pull Request, eigene Begründung, nicht nebenbei, um einen
+roten Test grün zu bekommen.
 
 ## Verboten
 
 - `git push --force`, Rebase oder Amend auf bereits gepushten Commits.
 - `--no-verify` oder `--no-gpg-sign` ohne ausdrückliche Anweisung.
-- Geheimnisse im Repository. `Config.local.xcconfig` bleibt ungetrackt.
+- Geheimnisse im Repository. Der KI-Schlüssel gehört in die Keychain.
 - Beta-SDKs als Projektgrundlage. Lokal ist Xcode 27 Beta Werkzeug; verbindlich
-  ist der CI-Lauf gegen macOS 14.
-- Analytik oder Telemetrie ohne eigenes ADR.
-- Änderungen an gemeinsamen Verträgen ohne Gegenprobe im Web-Repo.
+  ist der CI-Lauf gegen macOS 15.
+- Analytik oder Telemetrie ohne eigenes ADR — siehe Hartanker 2.
+- Änderungen in `sitzplan_app`. Dieses Repository schreibt dort nicht.
 
 ## Widerspruch ist erwünscht
 
-Anforderungen, die dem Designsystem, dem Datenschutz, der RLS oder dem
-Datenvertrag widersprechen: erst benennen, dann Alternative vorschlagen, dann
-auf Entscheidung warten.
+Anforderungen, die dem Designsystem, dem Datenschutz oder dem Datenvertrag
+widersprechen: erst benennen, dann Alternative vorschlagen, dann auf
+Entscheidung warten.

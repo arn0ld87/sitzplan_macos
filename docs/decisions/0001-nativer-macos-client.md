@@ -1,10 +1,20 @@
 # ADR-0001: Nativer macOS-Client als zweiter Client desselben Produkts
 
-- Status: **Accepted**
+- Status: **Superseded by [ADR-0002](0002-lokaler-einzelplatz.md)**
 - Datum: 2026-08-01
+- Abgelöst am: 2026-08-05
 - Betrifft: dieses Repository, `sitzplan_app` (Web-Client), das gemeinsame
   Supabase-Projekt
 - Entspricht im Web-Repo: `docs/decisions/0006-native-macos-client.md`
+
+> **Nicht mehr gültig.** Die Grundlage dieses ADR — ein gemeinsames Backend für
+> zwei Clients — ist mit [ADR-0002](0002-lokaler-einzelplatz.md) entfallen. Die
+> macOS-App speichert lokal, ohne Konto und ohne Server. Was hier über Druck,
+> Tastatur, Undo, den Ausschluss von WebView und Catalyst, die Schichtengrenzen
+> und den Ausschluss von Dark Mode steht, gilt unverändert weiter; alles zu
+> Supabase, RLS, Anmeldung, Publishable Key, Offline-Zuständen und
+> Fixture-Abgleich gegen das Web-Repo ist historisch. Das Dokument bleibt
+> stehen, weil die Begründung lesbar bleiben soll.
 
 ## Kontext
 
