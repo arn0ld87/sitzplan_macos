@@ -22,6 +22,7 @@ struct RaumEditor: View {
     @State private var hatBewegt = false
     @State private var speichert = false
     @State private var schmutzig = false
+    @State private var speicherfehler = false
 
     init(
         raum: Raum,
@@ -32,6 +33,15 @@ struct RaumEditor: View {
         self.sichern = sichern
         self.zeige3D = zeige3D
         _arbeitsRaum = State(initialValue: raum)
+    }
+
+    private var raumZusammenfassung: String {
+        let moebel = arbeitsRaum.dokument.objekte
+        if moebel.isEmpty {
+            return "Grundriss von \(arbeitsRaum.name), keine Möbel."
+        }
+        let aufzaehlung = moebel.map(\.typ.beschriftung).joined(separator: ", ")
+        return "Grundriss von \(arbeitsRaum.name), \(moebel.count) Möbel: \(aufzaehlung)."
     }
 
     var body: some View {
@@ -52,6 +62,9 @@ struct RaumEditor: View {
                             beendeDrag()
                         }
                 )
+                .accessibilityElement(children: .ignore)
+                .accessibilityLabel(raumZusammenfassung)
+                .accessibilityHint("Zum Auswählen tippen, zum Bewegen ziehen.")
             }
         }
         .ohneDarkMode()
@@ -79,6 +92,12 @@ struct RaumEditor: View {
                 Label("Entfernen", systemImage: "trash")
             }
             .disabled(ausgewaehlt == nil || speichert)
+
+            if speicherfehler {
+                Label("Nicht gesichert", systemImage: "exclamationmark.triangle.fill")
+                    .foregroundStyle(Farbe.gefahr)
+                    .accessibilityLabel("Achtung: Die letzten Änderungen konnten nicht gespeichert werden")
+            }
 
             Spacer()
 
@@ -129,9 +148,17 @@ struct RaumEditor: View {
         speichert = true
         let zuSichern = arbeitsRaum
         Task {
-            _ = await sichern(zuSichern)
+            let ok = await sichern(zuSichern)
             speichert = false
-            if schmutzig { schmutzig = false; autosave() }
+            if ok {
+                speicherfehler = false
+                if schmutzig { schmutzig = false; autosave() }
+            } else {
+                // Speichern gescheitert: Stand bleibt schmutzig, ein erneuter
+                // autosave-Versuch folgt bei der naechsten Aenderung. Bis
+                // dahin zeigt der Indikator den nicht gesicherten Stand an.
+                speicherfehler = true
+            }
         }
     }
 
@@ -167,8 +194,18 @@ struct RaumEditor: View {
         let objekt = arbeitsRaum.dokument.objekte[idx]
         let neuMittelpunktCmX = tapCm.x - d.dxCm
         let neuMittelpunktCmY = tapCm.y - d.dyCm
-        let neuXCm = Raster.runden(neuMittelpunktCmX - objekt.breiteCm / 2, raster: arbeitsRaum.rasterCm)
-        let neuYCm = Raster.runden(neuMittelpunktCmY - objekt.tiefeCm / 2, raster: arbeitsRaum.rasterCm)
+        // Auf die Raumflaeche begrenzen — die linke obere Ecke (xCm/yCm) darf
+        // nicht negativ werden und nicht ueber den Rand hinausragen.
+        let maxX = max(0, arbeitsRaum.breiteCm - objekt.breiteCm)
+        let maxY = max(0, arbeitsRaum.laengeCm - objekt.tiefeCm)
+        let neuXCm = Raster.runden(
+            min(max(0, neuMittelpunktCmX - objekt.breiteCm / 2), maxX),
+            raster: arbeitsRaum.rasterCm
+        )
+        let neuYCm = Raster.runden(
+            min(max(0, neuMittelpunktCmY - objekt.tiefeCm / 2), maxY),
+            raster: arbeitsRaum.rasterCm
+        )
         if arbeitsRaum.dokument.objekte[idx].xCm != neuXCm || arbeitsRaum.dokument.objekte[idx].yCm != neuYCm {
             arbeitsRaum.dokument.objekte[idx].xCm = neuXCm
             arbeitsRaum.dokument.objekte[idx].yCm = neuYCm
@@ -192,7 +229,9 @@ struct RaumEditor: View {
     private func massstab(in groesse: CGSize) -> CGFloat {
         let b = max(arbeitsRaum.breiteCm, 1)
         let l = max(arbeitsRaum.laengeCm, 1)
-        return min((groesse.width - 40) / b, (groesse.height - 40) / l)
+        // Mindestens 0.1 — bei winziger Canvas-Flaeche wuerde sonst ein
+        // negativer oder null-Massstab rauskommen und Drag/Zeichnung brechen.
+        return max(0.1, min((groesse.width - 40) / b, (groesse.height - 40) / l))
     }
 
     private func offset(in groesse: CGSize, massstab: CGFloat) -> CGPoint {
@@ -223,7 +262,10 @@ struct RaumEditor: View {
     private func moebelBei(_ punkt: CGPoint, massstab: CGFloat, offset: CGPoint) -> String? {
         for objekt in arbeitsRaum.dokument.objekte.reversed() {
             let m = mittelpunktPx(objekt, massstab: massstab, offset: offset)
-            let theta = -Double(objekt.drehung.grad) * .pi / 180
+            // Inverse der Zeichenrotation (`zeichneMoebel` rotiert um -grad):
+            // um den Tippunkt ins lokale, ungedrehte System zu holen, wird hier
+            // um +grad rotiert.
+            let theta = Double(objekt.drehung.grad) * .pi / 180
             let dx = Double(punkt.x - m.x)
             let dy = Double(punkt.y - m.y)
             let lokalX = dx * cos(theta) - dy * sin(theta)
@@ -293,6 +335,15 @@ struct RaumEditor: View {
             .applying(translation)
         context.fill(rechteck, with: .color(Farbe.fuerMoebeltyp(objekt.typ)))
         context.stroke(rechteck, with: .color(.black.opacity(0.25)), lineWidth: 1)
+
+        // Beschriftung im Rechteck — bei zu kleinem Möbel entfällt sie, sonst
+        // wuerde der Text das Rechteck ueberfuellen.
+        if min(breitePx, tiefePx) >= 30 {
+            let text = Text(objekt.typ.beschriftung)
+                .font(.caption2)
+                .foregroundStyle(.black.opacity(0.7))
+            context.draw(text, at: m)
+        }
 
         // 5. Sitzkennzeichnung — kleine Kreise an den Sitzplätzen.
         let sitze = arbeitsRaum.dokument.sitzplaetze.filter { $0.objektId == objekt.id }

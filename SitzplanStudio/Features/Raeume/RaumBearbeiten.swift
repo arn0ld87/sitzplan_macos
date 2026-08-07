@@ -12,7 +12,7 @@ struct RaumBearbeiten: View {
     @State private var breiteCm: Double
     @State private var laengeCm: Double
     @State private var rasterCm: Double
-    private let sichern: (String, Double, Double, Double) async -> Bool
+    private let sichern: (String, Double, Double, Double) async -> String?
 
     @Environment(\.dismiss) private var schliessen
     @FocusState private var imFeld: Bool
@@ -25,7 +25,7 @@ struct RaumBearbeiten: View {
         breiteCm: Double = 800,
         laengeCm: Double = 600,
         rasterCm: Double = Raster.standard,
-        sichern: @escaping (String, Double, Double, Double) async -> Bool
+        sichern: @escaping (String, Double, Double, Double) async -> String?
     ) {
         self.titel = titel
         _name = State(initialValue: name)
@@ -93,14 +93,18 @@ struct RaumBearbeiten: View {
             HStack {
                 Text(bezeichnung)
                     .frame(width: 80, alignment: .leading)
+                    .accessibilityHidden(true)
                 TextField(bezeichnung, value: wert, format: .number)
                     .textFieldStyle(.roundedBorder)
+                    .accessibilityLabel("\(bezeichnung) in Zentimetern. \(hilfe)")
                 Text("cm")
                     .foregroundStyle(.secondary)
+                    .accessibilityHidden(true)
             }
             Text(hilfe)
                 .font(.caption)
                 .foregroundStyle(.secondary)
+                .accessibilityHidden(true)
         }
     }
 
@@ -114,19 +118,19 @@ struct RaumBearbeiten: View {
         } catch let fehler as Domaenenfehler {
             fehlermeldung = fehler.beschreibung
             return
-        } catch {
-            fehlermeldung = "Die Eingabe ist ungültig."
-            return
         }
         fehlermeldung = nil
         arbeitet = true
         Task {
-            let erfolg = await sichern(name, breiteCm, laengeCm, rasterCm)
+            let fehler = await sichern(name, breiteCm, laengeCm, rasterCm)
             arbeitet = false
-            // Nur schliessen, wenn es geklappt hat. Sonst bliebe die Eingabe
-            // der Lehrkraft auf der Strecke, waehrend die Fehlermeldung ins
-            // Leere zeigt.
-            if erfolg { schliessen() }
+            // Bei Erfolg schliessen, bei Misserfolg die Meldung inline zeigen
+            // — nicht hinter dem Sheet, das die Lehrkraft gerade sieht.
+            if let fehler {
+                fehlermeldung = fehler
+            } else {
+                schliessen()
+            }
         }
     }
 }

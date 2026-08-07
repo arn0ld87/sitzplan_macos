@@ -9,7 +9,7 @@ import Testing
 ///
 /// Nie gegen die Datenbank der Benutzerin — deshalb ausschliesslich
 /// ``Speicher/containerImArbeitsspeicher()``.
-@Suite("Raum-Repository")
+@Suite("Raum-Repository", .serialized)
 struct RaumSpeicherTests {
 
     private func speicher() throws -> RaumSpeicher {

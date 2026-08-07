@@ -81,6 +81,18 @@ extension Klasse {
 }
 
 extension Raum {
+    /// Prueft einen Raumnamen. Leer ist kein Name — analog `Klasse.pruefeName`.
+    public static func pruefeName(_ name: String) throws(Domaenenfehler) -> String {
+        let bereinigt = name.trimmingCharacters(in: .whitespacesAndNewlines)
+        guard !bereinigt.isEmpty else {
+            throw .ungueltigeEingabe(feld: "Name", grund: "Bitte einen Namen eingeben.")
+        }
+        guard bereinigt.count <= 80 else {
+            throw .ungueltigeEingabe(feld: "Name", grund: "Höchstens 80 Zeichen.")
+        }
+        return bereinigt
+    }
+
     /// Masse und Raster sind Vertrag: Breite und Laenge groesser als 0, Raster
     /// mindestens 5. Frueher hat das eine `CHECK`-Bedingung erzwungen; ohne
     /// Datenbank gibt es niemanden, der es sonst tut.

@@ -145,7 +145,7 @@ Validierung beim Absenden: `Raum.pruefeMasse()` aufrufen, Fehler inline zeigen.
 
 `NavigationSplitView`:
 
-- Seitenleiste: Liste der Räume, Kontextmenü (Bearbeiten…, Löschen), ⌘N-Button
+- Seitenleiste: Liste der Räume, Kontextmenü (Bearbeiten…, Löschen), ⌘⇧N-Button
 - Detail: `RaumEditor` für den gewählten Raum (`.id(raum.id)` erzwingt Reset)
 
 Leerzustand: LeerHinweis mit „Neuen Raum anlegen"-Aktion.

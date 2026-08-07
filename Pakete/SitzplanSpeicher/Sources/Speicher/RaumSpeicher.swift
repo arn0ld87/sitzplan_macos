@@ -36,14 +36,17 @@ public actor RaumSpeicher: RaumRepository {
 
     @discardableResult
     public func anlegen(_ raum: Raum) throws(Domaenenfehler) -> Raum {
-        // Masse und Raster sind Vertrag. Ohne Datenbank gibt es niemanden, der
+        // Name und Masse sind Vertrag. Ohne Datenbank gibt es niemanden, der
         // eine `CHECK`-Bedingung erzwinge — also tut es die Speicherschicht,
         // als letzte Verteidigungslinie vor den Werten der Oberflaeche.
+        let bereinigterName = try Raum.pruefeName(raum.name)
         try Raum.pruefeMasse(breiteCm: raum.breiteCm, laengeCm: raum.laengeCm, rasterCm: raum.rasterCm)
 
+        // Neu angelegte Raeume sind aktiv — ein mitgebrachter `geloeschtAm`-Wert
+        // hat hier nichts zu suchen.
         let eintrag = RaumEintrag(
             id: raum.id,
-            name: raum.name,
+            name: bereinigterName,
             breiteCm: raum.breiteCm,
             laengeCm: raum.laengeCm,
             rasterCm: raum.rasterCm,
@@ -51,7 +54,7 @@ public actor RaumSpeicher: RaumRepository {
             dokumentVersion: raum.dokumentVersion,
             erstelltAm: raum.erstelltAm,
             geaendertAm: raum.geaendertAm,
-            geloeschtAm: raum.geloeschtAm
+            geloeschtAm: nil
         )
         modelContext.insert(eintrag)
         try sichern()

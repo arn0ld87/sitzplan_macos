@@ -4,14 +4,14 @@ Issues und PRDs fuer dieses Repository liegen in GitHub Issues. Verwende fuer al
 
 ## Conventions
 
-- Issue erstellen: gh issue create --title "..." --body "..."
-- Issue lesen: gh issue view <number> --comments
-- Issues listen: gh issue list --state open --json number,title,body,labels,comments
-- Kommentieren: gh issue comment <number> --body "..."
-- Labels setzen/entfernen: gh issue edit <number> --add-label "..." / --remove-label "..."
-- Schliessen: gh issue close <number> --comment "..."
+- Issue erstellen: gh issue create --repo arn0ld87/sitzplan_macos --title "..." --body "..."
+- Issue lesen: gh issue view <number> --repo arn0ld87/sitzplan_macos --comments
+- Issues listen: gh issue list --repo arn0ld87/sitzplan_macos --state open --json number,title,body,labels,comments
+- Kommentieren: gh issue comment <number> --repo arn0ld87/sitzplan_macos --body "..."
+- Labels setzen/entfernen: gh issue edit <number> --repo arn0ld87/sitzplan_macos --add-label "..." / --remove-label "..."
+- Schliessen: gh issue close <number> --repo arn0ld87/sitzplan_macos --comment "..."
 
-Das Repository wird aus dem lokalen Git-Checkout aufgeloest (origin auf GitHub).
+Repository ist immer `arn0ld87/sitzplan_macos` — explizit per `--repo`, nicht aus dem lokalen Checkout geraten.
 
 ## Pull requests as a triage surface
 

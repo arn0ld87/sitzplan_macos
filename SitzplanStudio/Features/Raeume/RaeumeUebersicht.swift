@@ -47,8 +47,8 @@ struct RaeumeUebersicht: View {
                         laengeCm: laenge,
                         rasterCm: raster
                     )
-                    if let angelegt { auswahlID = angelegt.id }
-                    return angelegt != nil
+                    if let angelegt { auswahlID = angelegt.id; return nil }
+                    return modell.meldung?.text
                 }
             )
         }
@@ -66,8 +66,8 @@ struct RaeumeUebersicht: View {
                     neu.laengeCm = laenge
                     neu.rasterCm = raster
                     let ok = await modell.aktualisieren(neu)
-                    if ok { auswahlID = neu.id }
-                    return ok
+                    if ok { auswahlID = neu.id; return nil }
+                    return modell.meldung?.text
                 }
             )
         }
@@ -184,8 +184,7 @@ private struct LeerHinweis: View {
                 .foregroundStyle(.secondary)
                 .multilineTextAlignment(.center)
             Button(aktion, action: ausfuehren)
-                .buttonStyle(.borderedProminent)
-                .tint(Farbe.primaeraktion)
+                .buttonStyle(.bordered)
         }
         .padding(40)
         .frame(maxWidth: 360)

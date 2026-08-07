@@ -37,9 +37,8 @@ public enum Farbe {
         return schuelerPalette[i]
     }
 
-    /// Möbelfarbe je Typ. Entspricht dem Web-Client (`src/components/plan/RoomPlan.tsx`).
-    /// Einzeltisch und Doppeltisch teilen sich Holzbeige — sie unterscheiden sich
-    /// durch Größe, nicht durch Farbe.
+    /// Möbelfarbe je Typ. Einzeltisch und Doppeltisch teilen sich Holzbeige —
+    /// sie unterscheiden sich durch Größe, nicht durch Farbe.
     public static func fuerMoebeltyp(_ typ: Moebeltyp) -> Color {
         switch typ {
         case .einzeltisch, .doppeltisch:

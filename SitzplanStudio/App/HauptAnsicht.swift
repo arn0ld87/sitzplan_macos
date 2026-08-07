@@ -35,9 +35,11 @@ public struct HauptAnsicht: View {
 
     public var body: some View {
         NavigationSplitView {
-            List(Abschnitt.allCases, selection: $abschnitt) { abschnitt in
-                Label(abschnitt.rawValue, systemImage: abschnitt.symbol)
-                    .tag(abschnitt)
+            List(selection: $abschnitt) {
+                ForEach(Abschnitt.allCases) { abschnitt in
+                    Label(abschnitt.rawValue, systemImage: abschnitt.symbol)
+                        .tag(abschnitt)
+                }
             }
             .navigationSplitViewColumnWidth(min: 150, ideal: 170)
             .listStyle(.sidebar)

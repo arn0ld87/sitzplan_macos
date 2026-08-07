@@ -15,13 +15,27 @@ struct RaumEditor3D: View {
     let raum: Raum
     let zeige2D: () -> Void
 
+    @State private var szeneCache: SCNScene?
+
     var body: some View {
         VStack(spacing: 0) {
             toolbar
-            SceneView(
-                scene: szene(),
-                options: [.allowsCameraControl, .autoenablesDefaultLighting]
-            )
+            if let szeneCache {
+                SceneView(
+                    scene: szeneCache,
+                    options: [.allowsCameraControl, .autoenablesDefaultLighting]
+                )
+                .accessibilityLabel("3D-Ansicht von \(raum.name), \(raum.dokument.objekte.count) Möbel")
+                .accessibilityHint("Mit der Maus drehen und zoomen.")
+            } else {
+                ProgressView().accessibilityLabel("3D-Ansicht wird aufgebaut")
+            }
+        }
+        // Szene einmal bauen und cachen — body kann mehrfach aufgerufen werden,
+        // ein erneuter Szenenaufbau bei jedem Redraw ist unnütz. `raum` ist
+        // unveränderlich; bei Raumwechsel wird die View per `.id` neu erzeugt.
+        .task {
+            if szeneCache == nil { szeneCache = szene() }
         }
         .ohneDarkMode()
     }
@@ -140,15 +154,16 @@ struct RaumEditor3D: View {
         }
     }
 
-    /// Y-Position des Möbelmittelpunkts. Tafel und Fenster hängen hoch; die
-    /// übrigen stehen auf dem Boden (Mitte = Höhe/2).
+    /// Y-Position des Möbelmittelpunkts. Bodenstehende Möbel stehen auf dem
+    /// Boden (Mitte = Höhe/2), Tafel und Fenster sind wandmontiert (Mitte bei
+    /// 150 cm) — sie stehen nicht auf dem Boden.
     private func yPositionFuer(_ typ: Moebeltyp) -> CGFloat {
         switch typ {
-        case .einzeltisch, .doppeltisch: 37.5
-        case .pult: 45
-        case .tafel: 150
-        case .tuer: 102.5
-        case .fenster: 150
+        case .tafel, .fenster:
+            // Wandmontage — unabhängig von der Möbelhöhe.
+            150
+        default:
+            hoeheFuer(typ) / 2
         }
     }
 

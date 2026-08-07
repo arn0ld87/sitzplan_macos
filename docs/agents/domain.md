@@ -7,6 +7,8 @@ Wie Engineering-Skills die fachliche Dokumentation in diesem Repository lesen so
 - CONTEXT.md im Repo-Root (falls vorhanden)
 - CONTEXT-MAP.md im Repo-Root (falls vorhanden; hier aktuell nicht genutzt)
 - docs/decisions/ fuer Architekturentscheidungen (ADR-Quelle in diesem Repo)
+- docs/datenvertrag.md — Vertrag fuer jedes Lesen oder Schreiben von Daten
+- contracts/fixtures/ — verbindliche Beispiele zum Datenvertrag
 
 Wenn eine dieser Dateien fehlt, still weiterarbeiten. Keine Pflicht, sie sofort anzulegen.
 
