@@ -198,10 +198,15 @@ final class RaeumeAblaufTests: XCTestCase {
 
         XCTAssertTrue(app.staticTexts["Raum löschen?"].waitForExistence(timeout: 5),
                       "Löschen muss erst bestätigt werden")
-        // Über den Alert eingrenzen: `app.buttons["Löschen"]` matcht auf CI
-        // (macos-26) zuerst ein Touch-Bar-Element, das nicht klickbar ist —
-        // der Alert-Button ist der richtige.
-        app.alerts.buttons["Löschen"].firstMatch.click()
+        // `app.buttons["Löschen"].firstMatch` greift auf CI (macos-26) ein
+        // Touch-Bar-Element, das nicht klickbar ist („cannot be called with
+        // Touch Bar elements"). Der SwiftUI `Alert` ist dort nicht als
+        // `alert` exponiert. `isHittable == true` filtert das nicht sichtbare
+        // Touch-Bar-Element aus — übrig bleibt der echte Alert-Button.
+        app.buttons["Löschen"]
+            .matching(NSPredicate(format: "isHittable == true"))
+            .firstMatch
+            .click()
 
         XCTAssertFalse(app.staticTexts["Raum Loeschbar"].waitForExistence(timeout: 3),
                        "Nach dem Bestätigen muss der Raum aus der Liste verschwinden")
