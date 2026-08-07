@@ -3,22 +3,15 @@ import SwiftUI
 
 /// Die Wurzelansicht — Umschaltung zwischen Klassen und Räumen.
 ///
-/// Schmale Abschnitts-Liste links (HStack, keine weitere `NavigationSplitView`),
-/// rechts der gewählte Abschnitt, der dort jeweils **eigene** innere Split-Views
-/// führt (KlassenListe bzw. RaeumeUebersicht).
-///
-/// Bewusst kein äußerer `NavigationSplitView`: verschachtelte Split-Views
-/// kollabieren auf macOS im CI den inneren Detailbereich — die KlassenListe
-/// würde ihren Leer-Hinweis nicht zeigen. Mit dem HStack verhält sich die innere
-/// Split-View wie eine Root-Split-View (zwei Spalten, Detail sichtbar).
+/// Schmale Abschnitts-Liste links (HStack-Panel), rechts der gewählte
+/// Abschnitt, der dort jeweils **eigene** innere `NavigationSplitView`s
+/// führt (KlassenListe bzw. RaeumeUebersicht). Ein äußeres `NavigationSplitView`
+/// ist nicht nötig: die inneren Split-Views expandieren in den Detailbereich
+/// dieses HStacks, und das Panel ist einfacher als eine dritte Spalte.
 ///
 /// Die Abschnitts-Umschaltung läuft über Buttons, nicht über
-/// `List(selection:)`: ein Selection-Binding würde `abschnitt` beim ersten
-/// Render auf `nil` überschreiben (frische UI ohne visuelle Selection synced
-/// das Binding zurück) — der Detail würde „Wählen Sie einen Abschnitt."
-/// zeigen statt KlassenListe. Buttons setzen `abschnitt` nur bei Klick, der
-/// Default `.klassen` bleibt stabil. Der `Text` im Button-Label ist als
-/// `staticText` auffindbar, was die UITests brauchen.
+/// `List(selection:)`: der `Text` im Button-Label ist als `staticText`
+/// auffindbar, was die RaeumeAblaufTests brauchen (`staticTexts["Räume"]`).
 ///
 /// `AppCommands` bleibt unberührt: Der Menübefehl `.neueKlasse` wirkt weiter,
 /// weil er als Notification in `KlassenListe` ankommt, unabhängig davon, welche
