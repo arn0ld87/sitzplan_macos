@@ -201,10 +201,11 @@ final class RaeumeAblaufTests: XCTestCase {
         // `app.buttons["Löschen"].firstMatch` greift auf CI (macos-26) ein
         // Touch-Bar-Element, das nicht klickbar ist („cannot be called with
         // Touch Bar elements"). Der SwiftUI `Alert` ist dort nicht als
-        // `alert` exponiert. `isHittable == true` filtert das nicht sichtbare
-        // Touch-Bar-Element aus — übrig bleibt der echte Alert-Button.
+        // `alert` exponiert. `hittable == true` (NSPredicate-Key, Swift:
+        // `isHittable`) filtert das nicht sichtbare Touch-Bar-Element aus —
+        // übrig bleibt der echte Alert-Button.
         app.buttons
-            .matching(NSPredicate(format: "label == 'Löschen' AND isHittable == true"))
+            .matching(NSPredicate(format: "label == 'Löschen' AND hittable == true"))
             .firstMatch
             .click()
 
