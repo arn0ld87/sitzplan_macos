@@ -68,7 +68,11 @@ jobs:
 
       - name: Speicher testen
         working-directory: Pakete/SitzplanSpeicher
-        run: swift test
+        # Seriell, nicht parallel: SwiftData crasht beim gleichzeitigen Aufbau
+        # mehrerer In-Memory-ModelContainer auf Xcode 26 mit signal 11 (SIGSEGV)
+        # — siehe MolodykhV/Plyne commit 5e7ea59, Apple Developer Forums thread
+        # 825727. Reproduziert nicht lokal (Xcode 27). 36 Tests unter 1 s.
+        run: swift test --no-parallel
 
       - name: App bauen und Oberflaeche testen
         run: |

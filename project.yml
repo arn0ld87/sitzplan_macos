@@ -70,10 +70,16 @@ targets:
         MARKETING_VERSION: "0.1.0"
         CURRENT_PROJECT_VERSION: "1"
         ENABLE_HARDENED_RUNTIME: YES
-        # Die App ruft im Regelfall gar nichts im Netz. Der eine erlaubte
-        # Aufruf (Gemini) kommt mit der KI-Funktion in M6 — dann wird
-        # com.apple.security.network.client hier ergaenzt und nicht frueher.
-        ENABLE_APP_SANDBOX: YES
+        # Keine App-Sandbox: ADR-0002 legt den Speicherort auf
+        # ~/Library/Application Support/SitzplanStudio/ fest, der außerhalb
+        # des Sandbox-Containers liegt — eine sandboxed App dürfte dort nicht
+        # schreiben und würde mit dem Startfehler stehen. Für die UITests
+        # kommt hinzu, dass ihr SITZPLAN_SPEICHERORT (tmp-Verzeichnis des
+        # Testprozesses) ebenfalls außerhalb der App-Sandbox liegt. Eine
+        # lokale App ohne Konto (ADR-0002) braucht die Sandbox nicht; der
+        # eine Netzaufruf (Gemini, M6) wird später über das network.client-
+        # Entitlement freigegeben, nicht über die Sandbox.
+        ENABLE_APP_SANDBOX: NO
 
   SitzplanStudioUITests:
     type: bundle.ui-testing

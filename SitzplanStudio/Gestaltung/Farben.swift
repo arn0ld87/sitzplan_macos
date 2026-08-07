@@ -1,3 +1,4 @@
+import Domain
 import SwiftUI
 
 /// Farbrollen aus dem Designsystem.
@@ -34,6 +35,23 @@ public enum Farbe {
     public static func schuelerFarbe(farbIndex: Int) -> Color {
         let i = ((farbIndex % schuelerPalette.count) + schuelerPalette.count) % schuelerPalette.count
         return schuelerPalette[i]
+    }
+
+    /// Möbelfarbe je Typ. Einzeltisch und Doppeltisch teilen sich Holzbeige —
+    /// sie unterscheiden sich durch Größe, nicht durch Farbe.
+    public static func fuerMoebeltyp(_ typ: Moebeltyp) -> Color {
+        switch typ {
+        case .einzeltisch, .doppeltisch:
+            Color(red: 0xC8 / 255, green: 0xA9 / 255, blue: 0x6E / 255) // Holzbeige
+        case .pult:
+            Color(red: 0x8B / 255, green: 0x69 / 255, blue: 0x14 / 255) // Dunkelholz
+        case .tafel:
+            Color(red: 0x2D / 255, green: 0x5A / 255, blue: 0x3D / 255) // Schiefergrün
+        case .tuer:
+            Color(red: 0xD4 / 255, green: 0xC5 / 255, blue: 0xA9 / 255) // Beige
+        case .fenster:
+            Color(red: 0x87 / 255, green: 0xCE / 255, blue: 0xEB / 255) // Hellblau
+        }
     }
 }
 

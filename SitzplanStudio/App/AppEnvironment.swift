@@ -13,14 +13,17 @@ public final class AppEnvironment {
     public let klassen: any KlassenRepository
     public let schueler: any SchuelerRepository
     public let sitzregeln: any SitzregelRepository
+    public let raeume: any RaumRepository
 
     public init(
         klassen: any KlassenRepository,
         schueler: any SchuelerRepository,
-        sitzregeln: any SitzregelRepository
+        sitzregeln: any SitzregelRepository,
+        raeume: any RaumRepository
     ) {
         self.klassen = klassen
         self.schueler = schueler
         self.sitzregeln = sitzregeln
+        self.raeume = raeume
     }
 }
