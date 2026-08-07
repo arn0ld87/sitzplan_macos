@@ -13,7 +13,7 @@ struct SitzplanStudioApp: App {
     var body: some Scene {
         WindowGroup {
             inhalt
-                .frame(minWidth: 720, minHeight: 460)
+                .frame(minWidth: 900, minHeight: 460)
                 .ohneDarkMode()
         }
         .commands { AppCommands() }
@@ -23,11 +23,7 @@ struct SitzplanStudioApp: App {
     private var inhalt: some View {
         switch start {
         case .bereit(let umgebung):
-            KlassenListe(
-                modell: KlassenModell(repository: umgebung.klassen),
-                schuelerRepo: umgebung.schueler,
-                sitzregelRepo: umgebung.sitzregeln
-            )
+            HauptAnsicht(umgebung: umgebung)
         case .gescheitert(let fehler):
             Startfehler(fehler: fehler)
         }
@@ -60,7 +56,8 @@ enum Startergebnis {
             return .bereit(AppEnvironment(
                 klassen: KlassenSpeicher(modelContainer: container),
                 schueler: SchuelerSpeicher(modelContainer: container),
-                sitzregeln: SitzregelSpeicher(modelContainer: container)
+                sitzregeln: SitzregelSpeicher(modelContainer: container),
+                raeume: RaumSpeicher(modelContainer: container)
             ))
         } catch {
             return .gescheitert(error)

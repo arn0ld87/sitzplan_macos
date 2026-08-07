@@ -71,6 +71,18 @@ extension Moebeltyp {
     public var breiteCm: Double { masse.breiteCm }
     public var tiefeCm: Double { masse.tiefeCm }
     public var anzahlSitzplaetze: Int { masse.sitzplaetze }
+
+    /// Beschriftung fuer die Oberflaeche. Reinwert, keine Logik.
+    public var beschriftung: String {
+        switch self {
+        case .einzeltisch: "Einzeltisch"
+        case .doppeltisch: "Doppeltisch"
+        case .pult: "Lehrerpult"
+        case .tafel: "Tafel"
+        case .tuer: "Tür"
+        case .fenster: "Fenster"
+        }
+    }
 }
 
 /// Erlaubte Drehungen. Alles andere wird beim Lesen zu 0.
