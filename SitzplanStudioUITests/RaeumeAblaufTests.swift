@@ -198,15 +198,12 @@ final class RaeumeAblaufTests: XCTestCase {
 
         XCTAssertTrue(app.staticTexts["Raum löschen?"].waitForExistence(timeout: 5),
                       "Löschen muss erst bestätigt werden")
-        // SwiftUI `Alert` ist auf CI (macos-26) nicht als `alert` exponiert
-        // (alerts leer), und `app.buttons["Löschen"].firstMatch` greift ein
-        // Touch-Bar-Element, das nicht klickbar ist. Den Button über den
-        // modalen Container (Dialog/Sheet/Window) eingrenzen — das Touch-Bar-
-        // Element ist in keinem dieser Container.
-        print("UITEST dialog-container: dialogs=\(app.dialogs.count) sheets=\(app.sheets.count) windows=\(app.windows.count)")
-        let container = app.dialogs.firstMatch.exists ? app.dialogs
-            : (app.sheets.firstMatch.exists ? app.sheets : app.windows)
-        container.buttons["Löschen"].firstMatch.click()
+        // SwiftUI `Alert` ist auf CI (macos-26) als `sheet` exponiert (nicht als
+        // `alert` oder `dialog`), und `app.buttons["Löschen"].firstMatch` greift
+        // ein Touch-Bar-Element, das nicht klickbar ist. Über `app.sheets` ist
+        // der echte Alert-Button gemeint; das Touch-Bar-Element liegt in keinem
+        // Sheet.
+        app.sheets.buttons["Löschen"].firstMatch.click()
 
         XCTAssertFalse(app.staticTexts["Raum Loeschbar"].waitForExistence(timeout: 3),
                        "Nach dem Bestätigen muss der Raum aus der Liste verschwinden")
