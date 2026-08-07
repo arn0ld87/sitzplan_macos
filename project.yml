@@ -1,0 +1,105 @@
+# Quelle des Xcode-Projekts.
+#
+# `SitzplanStudio.xcodeproj` wird hieraus erzeugt (`xcodegen generate`) und ist
+# mit eingecheckt, damit ein Klon ohne XcodeGen baut. Wer diese Datei aendert,
+# generiert neu und committet beides.
+#
+# Die Quellordner sind `syncedFolder`, also filesystem-synchronized groups: Eine
+# neue Datei landet ohne Aenderung an `project.pbxproj` im Target. Das nimmt
+# genau die Merge-Konflikte weg, die ein Xcode-Projekt sonst zuverlaessig
+# erzeugt.
+
+name: SitzplanStudio
+
+options:
+  bundleIdPrefix: de.alexle135
+  deploymentTarget:
+    macOS: "15.0"
+  createIntermediateGroups: true
+  generateEmptyDirectories: false
+
+settings:
+  base:
+    SWIFT_VERSION: "6.0"
+    SWIFT_STRICT_CONCURRENCY: complete
+    SWIFT_UPCOMING_FEATURE_EXISTENTIAL_ANY: YES
+    ENABLE_USER_SCRIPT_SANDBOXING: YES
+    DEAD_CODE_STRIPPING: YES
+    CLANG_ENABLE_MODULES: YES
+    # Keine Geheimnisse im Projekt. Der KI-Schluessel gehoert in die Keychain,
+    # nicht in eine Build-Einstellung.
+    CODE_SIGN_STYLE: Automatic
+
+packages:
+  SitzplanKern:
+    path: Pakete/SitzplanKern
+  SitzplanSpeicher:
+    path: Pakete/SitzplanSpeicher
+
+targets:
+  SitzplanStudio:
+    type: application
+    platform: macOS
+    sources:
+      - path: SitzplanStudio
+        type: syncedFolder
+    dependencies:
+      - package: SitzplanKern
+        product: Domain
+      - package: SitzplanKern
+        product: Datenvertrag
+      - package: SitzplanKern
+        product: Core
+      - package: SitzplanSpeicher
+        product: Speicher
+    info:
+      path: SitzplanStudio/Info.plist
+      properties:
+        CFBundleName: Sitzplan Studio
+        CFBundleDisplayName: Sitzplan Studio
+        CFBundleShortVersionString: "0.1.0"
+        CFBundleVersion: "1"
+        LSMinimumSystemVersion: "15.0"
+        NSHumanReadableCopyright: ""
+        # Der Ausschluss von Dark Mode wird in SwiftUI gesetzt
+        # (`.ohneDarkMode()`), nicht ueber die veraltete
+        # NSRequiresAquaSystemAppearance-Angabe.
+    settings:
+      base:
+        PRODUCT_BUNDLE_IDENTIFIER: de.alexle135.SitzplanStudio
+        MARKETING_VERSION: "0.1.0"
+        CURRENT_PROJECT_VERSION: "1"
+        ENABLE_HARDENED_RUNTIME: YES
+        # Die App ruft im Regelfall gar nichts im Netz. Der eine erlaubte
+        # Aufruf (Gemini) kommt mit der KI-Funktion in M6 — dann wird
+        # com.apple.security.network.client hier ergaenzt und nicht frueher.
+        ENABLE_APP_SANDBOX: YES
+
+  SitzplanStudioUITests:
+    type: bundle.ui-testing
+    platform: macOS
+    sources:
+      - path: SitzplanStudioUITests
+        type: syncedFolder
+    dependencies:
+      - target: SitzplanStudio
+    settings:
+      base:
+        PRODUCT_BUNDLE_IDENTIFIER: de.alexle135.SitzplanStudioUITests
+        # Ohne Info.plist scheitert das Signieren des Testbundles. Erzeugt
+        # statt handgepflegt: Ein Testbundle hat nichts zu konfigurieren.
+        GENERATE_INFOPLIST_FILE: YES
+        TEST_TARGET_NAME: SitzplanStudio
+
+schemes:
+  SitzplanStudio:
+    build:
+      targets:
+        SitzplanStudio: all
+        SitzplanStudioUITests: [test]
+    test:
+      targets:
+        - SitzplanStudioUITests
+      gatherCoverageData: false
+    run:
+      config: Debug
