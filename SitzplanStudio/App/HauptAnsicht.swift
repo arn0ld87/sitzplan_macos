@@ -12,10 +12,13 @@ import SwiftUI
 /// würde ihren Leer-Hinweis nicht zeigen. Mit dem HStack verhält sich die innere
 /// Split-View wie eine Root-Split-View (zwei Spalten, Detail sichtbar).
 ///
-/// Die Abschnitts-Liste nutzt `Text` (kein `Label`): in einer Sidebar-Cell
-/// würde `Label` zu einem Button mit kombinierter Accessibility — der Text
-/// „Räume" wäre dann nicht als `staticText` auffindbar. `Text` bleibt ein
-/// `staticText`, den die UITests klicken können.
+/// Die Abschnitts-Umschaltung läuft über Buttons, nicht über
+/// `List(selection:)`: ein Selection-Binding würde `abschnitt` beim ersten
+/// Render auf `nil` überschreiben (frische UI ohne visuelle Selection synced
+/// das Binding zurück) — der Detail würde „Wählen Sie einen Abschnitt."
+/// zeigen statt KlassenListe. Buttons setzen `abschnitt` nur bei Klick, der
+/// Default `.klassen` bleibt stabil. Der `Text` im Button-Label ist als
+/// `staticText` auffindbar, was die UITests brauchen.
 ///
 /// `AppCommands` bleibt unberührt: Der Menübefehl `.neueKlasse` wirkt weiter,
 /// weil er als Notification in `KlassenListe` ankommt, unabhängig davon, welche
@@ -48,15 +51,25 @@ public struct HauptAnsicht: View {
     // MARK: - Abschnitts-Liste
 
     private var seitenleiste: some View {
-        List(selection: $abschnitt) {
-            ForEach(Abschnitt.allCases) { abschnitt in
-                Text(abschnitt.rawValue)
-                    .tag(abschnitt)
+        VStack(spacing: 2) {
+            ForEach(Abschnitt.allCases) { eintrag in
+                Button {
+                    abschnitt = eintrag
+                } label: {
+                    Text(eintrag.rawValue)
+                        .frame(maxWidth: .infinity, alignment: .leading)
+                        .padding(.vertical, 6)
+                        .padding(.horizontal, 10)
+                }
+                .buttonStyle(.plain)
+                .background(abschnitt == eintrag ? Color.accentColor.opacity(0.15) : .clear)
+                .clipShape(RoundedRectangle(cornerRadius: 6))
             }
+            Spacer()
         }
-        .listStyle(.sidebar)
-        .navigationTitle("Sitzplan Studio")
+        .padding(8)
         .frame(width: 170)
+        .background(.regularMaterial)
     }
 
     // MARK: - Detail
