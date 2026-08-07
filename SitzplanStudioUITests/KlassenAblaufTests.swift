@@ -29,6 +29,16 @@ final class KlassenAblaufTests: XCTestCase {
         return app
     }
 
+    /// Sucht eine Klasse in der Listenansicht über ihren accessibilityIdentifier
+    /// („klasse-<name>"). Das accessibilityLabel „Klasse <name>" wird auf CI
+    /// (Xcode 26) zum staticText-Label, sodass `staticTexts["7a"]` die Klasse
+    /// nicht findet — der identifier ist davon unberührt und sprachunabhängig.
+    private func klasseInListe(_ app: XCUIApplication, name: String) -> XCUIElement {
+        app.staticTexts
+            .matching(NSPredicate(format: "identifier == 'klasse-\(name)'"))
+            .firstMatch
+    }
+
     func testFensterErscheintMitKlassenliste() {
         let app = starten()
         XCTAssertTrue(app.windows.firstMatch.waitForExistence(timeout: 10),
@@ -50,7 +60,7 @@ final class KlassenAblaufTests: XCTestCase {
 
         app.buttons["Sichern"].firstMatch.click()
 
-        XCTAssertTrue(app.staticTexts["7a"].waitForExistence(timeout: 5),
+        XCTAssertTrue(klasseInListe(app, name: "7a").waitForExistence(timeout: 5),
                       "Die angelegte Klasse muss in der Liste stehen")
     }
 
@@ -67,12 +77,12 @@ final class KlassenAblaufTests: XCTestCase {
         feld.click()
         feld.typeText("9c")
         app.buttons["Sichern"].firstMatch.click()
-        XCTAssertTrue(app.staticTexts["9c"].waitForExistence(timeout: 5))
+        XCTAssertTrue(klasseInListe(app, name: "9c").waitForExistence(timeout: 5))
 
         app.terminate()
 
         let neu = starten()
-        XCTAssertTrue(neu.staticTexts["9c"].waitForExistence(timeout: 10),
+        XCTAssertTrue(klasseInListe(neu, name: "9c").waitForExistence(timeout: 10),
                       "Nach dem Neustart muss die Klasse noch da sein — sonst ist der Speicher wertlos")
     }
 
@@ -91,7 +101,7 @@ final class KlassenAblaufTests: XCTestCase {
         // Enter statt Klick auf „Sichern“.
         feld.typeKey(.enter, modifierFlags: [])
 
-        XCTAssertTrue(app.staticTexts["5b"].waitForExistence(timeout: 5),
+        XCTAssertTrue(klasseInListe(app, name: "5b").waitForExistence(timeout: 5),
                       "Der Ablauf muss vollständig ohne Maus gehen")
     }
 
@@ -106,7 +116,7 @@ final class KlassenAblaufTests: XCTestCase {
         feld.typeText("7a")
         app.buttons["Sichern"].firstMatch.click()
 
-        let eintrag = app.staticTexts["7a"]
+        let eintrag = klasseInListe(app, name: "7a")
         XCTAssertTrue(eintrag.waitForExistence(timeout: 5))
 
         eintrag.rightClick()

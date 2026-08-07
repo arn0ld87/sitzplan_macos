@@ -32,7 +32,10 @@ final class RaeumeAblaufTests: XCTestCase {
 
     /// Wechselt von der Standardansicht „Klassen“ zum Abschnitt „Räume“.
     private func wechsleZuRaeume(_ app: XCUIApplication) {
-        let eintrag = app.staticTexts["Räume"]
+        // Der Abschnitt ist ein Button in der Seitenleiste — auf CI (Xcode 26)
+        // wird der Button-Label-Text als `button["Räume"]` exponiert, nicht als
+        // `staticText["Räume"]`. Der Button ist ohnehin der Interaktionspunkt.
+        let eintrag = app.buttons["Räume"]
         XCTAssertTrue(eintrag.waitForExistence(timeout: 5), "Der Abschnitt „Räume“ muss in der Seitenleiste stehen")
         eintrag.click()
     }

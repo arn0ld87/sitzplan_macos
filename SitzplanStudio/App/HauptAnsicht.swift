@@ -10,8 +10,9 @@ import SwiftUI
 /// dieses HStacks, und das Panel ist einfacher als eine dritte Spalte.
 ///
 /// Die Abschnitts-Umschaltung läuft über Buttons, nicht über
-/// `List(selection:)`: der `Text` im Button-Label ist als `staticText`
-/// auffindbar, was die RaeumeAblaufTests brauchen (`staticTexts["Räume"]`).
+/// `List(selection:)`: der Button ist der natürliche Interaktionspunkt und
+/// auf CI als `button["Räume"]` auffindbar, was die RaeumeAblaufTests nutzen
+/// (`buttons["Räume"]`).
 ///
 /// `AppCommands` bleibt unberührt: Der Menübefehl `.neueKlasse` wirkt weiter,
 /// weil er als Notification in `KlassenListe` ankommt, unabhängig davon, welche

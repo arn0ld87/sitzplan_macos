@@ -69,6 +69,12 @@ public struct KlassenListe: View {
                     Text(klasse.name)
                         .tag(klasse.id)
                         .accessibilityLabel("Klasse \(klasse.name)")
+                        // Sprachunabhängiger, stabiler Anker für die UITests —
+                        // das accessibilityLabel wird auf CI (Xcode 26) zum
+                        // staticText-Label, sodass `staticTexts["7a"]` die
+                        // Klasse nicht findet. Der identifier bleibt davon
+                        // unberührt und ist das Test-Suchkriterium.
+                        .accessibilityIdentifier("klasse-\(klasse.name)")
                         .contextMenu {
                             Button("Umbenennen…") { benenntUm = klasse }
                             Button("Löschen", role: .destructive) {
