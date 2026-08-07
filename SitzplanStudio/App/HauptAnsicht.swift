@@ -1,5 +1,4 @@
 import Domain
-import Speicher
 import SwiftUI
 
 /// Die Wurzelansicht — Umschaltung zwischen Klassen und Räumen.

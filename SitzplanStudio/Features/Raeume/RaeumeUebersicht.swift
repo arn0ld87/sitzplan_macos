@@ -73,8 +73,8 @@ struct RaeumeUebersicht: View {
         }
         .alert(item: $modell.meldung) { meldung in
             Alert(
-                title: Text("Raum konnte nicht gespeichert werden"),
-                message: Text(meldung.text),
+                title: Text(meldung.text),
+                message: meldung.vorschlag.map(Text.init),
                 dismissButton: .default(Text("OK"))
             )
         }
@@ -105,7 +105,9 @@ struct RaeumeUebersicht: View {
                 }
         }
         .overlay {
-            if modell.raeume.isEmpty {
+            // Nur bei `.leer` — während `.laedt` wäre die Liste leer, ohne dass
+            // schon feststeht, ob Räume existieren (Copilot-Finding).
+            if modell.raeume.isEmpty && modell.zustand == .leer {
                 LeerHinweis(
                     symbol: "rectangle.group",
                     titel: "Noch keine Räume",

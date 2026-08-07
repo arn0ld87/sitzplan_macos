@@ -49,6 +49,10 @@ struct RaumBearbeiten: View {
                 .textFieldStyle(.roundedBorder)
                 .focused($imFeld)
                 .accessibilityLabel("Name des Raums")
+                .onChange(of: name) { _, neu in
+                    // migration.md: Name auf 80 Zeichen begrenzt.
+                    if neu.count > 80 { name = String(neu.prefix(80)) }
+                }
                 .onSubmit { if eingabeGueltig { starteSichern() } }
 
             Text("Zum Beispiel: Raum 101 oder Fachraum Naturwissenschaften.")
