@@ -198,7 +198,10 @@ final class RaeumeAblaufTests: XCTestCase {
 
         XCTAssertTrue(app.staticTexts["Raum löschen?"].waitForExistence(timeout: 5),
                       "Löschen muss erst bestätigt werden")
-        app.buttons["Löschen"].firstMatch.click()
+        // Über den Alert eingrenzen: `app.buttons["Löschen"]` matcht auf CI
+        // (macos-26) zuerst ein Touch-Bar-Element, das nicht klickbar ist —
+        // der Alert-Button ist der richtige.
+        app.alerts.buttons["Löschen"].firstMatch.click()
 
         XCTAssertFalse(app.staticTexts["Raum Loeschbar"].waitForExistence(timeout: 3),
                        "Nach dem Bestätigen muss der Raum aus der Liste verschwinden")
