@@ -17,6 +17,24 @@ public enum Farbe {
 
     /// Loeschen und Fehler — und nur dafuer.
     public static let gefahr = Color(red: 0xA3 / 255, green: 0x2E / 255, blue: 0x24 / 255)
+
+    /// Die acht Schülerfarben. Entsprechen `STUDENT_COLORS` im Web-Client
+    /// (`src/data/types.ts`). Index 0–7, identische Hex-Werte.
+    public static let schuelerPalette: [Color] = [
+        Color(red: 0xE0 / 255, green: 0x8A / 255, blue: 0x6B / 255), // 0 Terrakotta
+        Color(red: 0x9D / 255, green: 0xBF / 255, blue: 0xA8 / 255), // 1 Salbei
+        Color(red: 0xE3 / 255, green: 0xB5 / 255, blue: 0x6B / 255), // 2 Gold
+        Color(red: 0xA9 / 255, green: 0x9C / 255, blue: 0xCB / 255), // 3 Lavendel
+        Color(red: 0x7C / 255, green: 0xA9 / 255, blue: 0xC2 / 255), // 4 Petrol
+        Color(red: 0xD8 / 255, green: 0x8B / 255, blue: 0xA0 / 255), // 5 Altrosa
+        Color(red: 0xB8 / 255, green: 0x99 / 255, blue: 0x70 / 255), // 6 Beige
+        Color(red: 0x82 / 255, green: 0xB7 / 255, blue: 0xA5 / 255), // 7 Mint
+    ]
+
+    public static func schuelerFarbe(farbIndex: Int) -> Color {
+        let i = ((farbIndex % schuelerPalette.count) + schuelerPalette.count) % schuelerPalette.count
+        return schuelerPalette[i]
+    }
 }
 
 extension View {

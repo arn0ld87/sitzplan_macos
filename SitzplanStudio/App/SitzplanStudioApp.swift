@@ -23,7 +23,11 @@ struct SitzplanStudioApp: App {
     private var inhalt: some View {
         switch start {
         case .bereit(let umgebung):
-            KlassenListe(modell: KlassenModell(repository: umgebung.klassen))
+            KlassenListe(
+                modell: KlassenModell(repository: umgebung.klassen),
+                schuelerRepo: umgebung.schueler,
+                sitzregelRepo: umgebung.sitzregeln
+            )
         case .gescheitert(let fehler):
             Startfehler(fehler: fehler)
         }
@@ -53,7 +57,11 @@ enum Startergebnis {
 
         do {
             let container = try Speicher.container(ort)
-            return .bereit(AppEnvironment(klassen: KlassenSpeicher(modelContainer: container)))
+            return .bereit(AppEnvironment(
+                klassen: KlassenSpeicher(modelContainer: container),
+                schueler: SchuelerSpeicher(modelContainer: container),
+                sitzregeln: SitzregelSpeicher(modelContainer: container)
+            ))
         } catch {
             return .gescheitert(error)
         }

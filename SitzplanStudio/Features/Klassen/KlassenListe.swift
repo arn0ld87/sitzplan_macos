@@ -5,17 +5,26 @@ import SwiftUI
 ///
 /// Bedienung: Alles ist mit der Tastatur erreichbar. Umbenennen liegt auf ⌘R,
 /// Loeschen auf ⌫, Anlegen auf ⌘N. Jede Aktion traegt eine
-/// VoiceOver-Beschriftung, die den Namen der Klasse nennt, statt nur „Loeschen“
+/// VoiceOver-Beschriftung, die den Namen der Klasse nennt, statt nur „Loeschen"
 /// zu sagen.
 public struct KlassenListe: View {
     @State private var modell: KlassenModell
+    let schuelerRepo: any SchuelerRepository
+    let sitzregelRepo: any SitzregelRepository
+
     @State private var auswahl: Klasse.ID?
     @State private var legtAn = false
     @State private var benenntUm: Klasse?
     @State private var zeigtPapierkorb = false
 
-    public init(modell: KlassenModell) {
+    public init(
+        modell: KlassenModell,
+        schuelerRepo: any SchuelerRepository,
+        sitzregelRepo: any SitzregelRepository
+    ) {
         _modell = State(initialValue: modell)
+        self.schuelerRepo = schuelerRepo
+        self.sitzregelRepo = sitzregelRepo
     }
 
     public var body: some View {
@@ -128,7 +137,15 @@ public struct KlassenListe: View {
 
         case .gefuellt:
             if let gewaehlt = modell.klassen.first(where: { $0.id == auswahl }) {
-                Klassendetail(klasse: gewaehlt) { benenntUm = gewaehlt }
+                Klassendetail(
+                    klasse: gewaehlt,
+                    schuelerRepo: schuelerRepo,
+                    sitzregelRepo: sitzregelRepo,
+                    umbenennen: { benenntUm = gewaehlt }
+                )
+                // .id stellt sicher, dass SchuelerModell bei Klassenwechsel
+                // neu erzeugt wird — keine Reste aus der vorherigen Klasse.
+                .id(gewaehlt.id)
             } else {
                 Text("Wählen Sie eine Klasse.")
                     .foregroundStyle(.secondary)
@@ -143,29 +160,33 @@ private struct Klassendetail: View {
     let klasse: Klasse
     let umbenennen: () -> Void
 
+    @State private var schuelerModell: SchuelerModell
+
+    init(
+        klasse: Klasse,
+        schuelerRepo: any SchuelerRepository,
+        sitzregelRepo: any SitzregelRepository,
+        umbenennen: @escaping () -> Void
+    ) {
+        self.klasse = klasse
+        self.umbenennen = umbenennen
+        _schuelerModell = State(initialValue: SchuelerModell(
+            klasseId: klasse.id,
+            schuelerRepo: schuelerRepo,
+            sitzregelRepo: sitzregelRepo
+        ))
+    }
+
     var body: some View {
-        VStack(alignment: .leading, spacing: 16) {
-            Text(klasse.name)
-                .font(.largeTitle)
-                .accessibilityAddTraits(.isHeader)
-
-            if let notizen = klasse.notizen, !notizen.isEmpty {
-                Text(notizen).foregroundStyle(.secondary)
+        SchuelerListe(modell: schuelerModell)
+            .navigationTitle(klasse.name)
+            .toolbar {
+                ToolbarItem(placement: .navigation) {
+                    Button("Umbenennen…", action: umbenennen)
+                        .keyboardShortcut("r", modifiers: .command)
+                        .help("Klasse umbenennen (⌘R)")
+                }
             }
-
-            Text("Schüler und Sitzpläne folgen im nächsten Meilenstein.")
-                .foregroundStyle(.secondary)
-
-            Spacer()
-        }
-        .padding(24)
-        .frame(maxWidth: .infinity, maxHeight: .infinity, alignment: .topLeading)
-        .toolbar {
-            ToolbarItem(placement: .primaryAction) {
-                Button("Umbenennen…", action: umbenennen)
-                    .keyboardShortcut("r", modifiers: .command)
-            }
-        }
     }
 }
 

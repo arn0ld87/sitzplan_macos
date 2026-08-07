@@ -11,24 +11,16 @@ import SwiftData
 @MainActor
 public final class AppEnvironment {
     public let klassen: any KlassenRepository
+    public let schueler: any SchuelerRepository
+    public let sitzregeln: any SitzregelRepository
 
-    public init(klassen: any KlassenRepository) {
+    public init(
+        klassen: any KlassenRepository,
+        schueler: any SchuelerRepository,
+        sitzregeln: any SitzregelRepository
+    ) {
         self.klassen = klassen
-    }
-
-    /// Die Umgebung fuer den laufenden Betrieb: echter Speicher unter
-    /// Application Support.
-    public static func echt() throws(Domaenenfehler) -> AppEnvironment {
-        let container = try Speicher.container()
-        return AppEnvironment(klassen: KlassenSpeicher(modelContainer: container))
-    }
-
-    /// Die Umgebung fuer Tests und Vorschauen: alles im Arbeitsspeicher.
-    ///
-    /// Ausdruecklich getrennt benannt, damit sie nie versehentlich im Produkt
-    /// landet.
-    public static func imArbeitsspeicher() throws(Domaenenfehler) -> AppEnvironment {
-        let container = try Speicher.containerImArbeitsspeicher()
-        return AppEnvironment(klassen: KlassenSpeicher(modelContainer: container))
+        self.schueler = schueler
+        self.sitzregeln = sitzregeln
     }
 }
