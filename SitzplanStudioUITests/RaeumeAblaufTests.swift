@@ -203,8 +203,8 @@ final class RaeumeAblaufTests: XCTestCase {
         // Touch Bar elements"). Der SwiftUI `Alert` ist dort nicht als
         // `alert` exponiert. `isHittable == true` filtert das nicht sichtbare
         // Touch-Bar-Element aus — übrig bleibt der echte Alert-Button.
-        app.buttons["Löschen"]
-            .matching(NSPredicate(format: "isHittable == true"))
+        app.buttons
+            .matching(NSPredicate(format: "label == 'Löschen' AND isHittable == true"))
             .firstMatch
             .click()
 
