@@ -148,4 +148,108 @@ struct RaumSpeicherTests {
         }
         #expect(try await s.raum(id: UUID()) == nil)
     }
+
+    @Test("Wiederherstellen einer unbekannten Kennung ergibt denselben typisierten Fehler")
+    func unbekannteKennungWiederherstellen() async throws {
+        let s = try speicher()
+        await #expect(throws: Domaenenfehler.nichtGefunden(art: "Der Raum")) {
+            try await s.wiederherstellen(id: UUID())
+        }
+    }
+
+    @Test("Ein Raster von genau 5 cm ist die untere Grenze und wird angenommen")
+    func rasterUntereGrenze() async throws {
+        let s = try speicher()
+        let angelegt = try await s.anlegen(raum(raster: 5))
+        #expect(angelegt.rasterCm == 5)
+    }
+
+    @Test("Negative Breite und Laenge werden ebenso abgelehnt wie 0")
+    func negativeMasse() async throws {
+        let s = try speicher()
+        await #expect(throws: Domaenenfehler.self) {
+            try await s.anlegen(raum(breite: -100, laenge: 600))
+        }
+        await #expect(throws: Domaenenfehler.self) {
+            try await s.anlegen(raum(breite: 800, laenge: -1))
+        }
+        #expect(try await s.aktive().isEmpty)
+    }
+
+    @Test("Das Raumdokument mit Moebeln und Sitzplaetzen ueberlebt Anlegen und Lesen")
+    func dokumentRundreiseBeimAnlegen() async throws {
+        let s = try speicher()
+        let objekt = Raumobjekt(id: "obj-1", typ: .doppeltisch, xCm: 100, yCm: 50, drehung: .neunzig)
+        let sitzplatz = Sitzplatz(id: "obj-1__sitz_1", objektId: "obj-1", lokalXCm: 10, lokalYCm: 20, bezeichnung: "1")
+        var raumMitDokument = raum()
+        raumMitDokument.dokument = RaumDokument(objekte: [objekt], sitzplaetze: [sitzplatz])
+
+        let angelegt = try await s.anlegen(raumMitDokument)
+        #expect(angelegt.dokument.objekte == [objekt])
+        #expect(angelegt.dokument.sitzplaetze == [sitzplatz])
+
+        let geladen = try await s.raum(id: angelegt.id)
+        #expect(geladen?.dokument.objekte == [objekt])
+        #expect(geladen?.dokument.sitzplaetze == [sitzplatz])
+    }
+
+    @Test("Das Raumdokument wird beim Aktualisieren ersetzt, nicht zusammengefuehrt")
+    func dokumentWirdBeimAktualisierenErsetzt() async throws {
+        let s = try speicher()
+        var angelegt = try await s.anlegen(raum())
+        angelegt.dokument = RaumDokument(
+            objekte: [Raumobjekt(id: "obj-1", typ: .einzeltisch, xCm: 0, yCm: 0)]
+        )
+        let ersteVersion = try await s.aktualisieren(angelegt)
+        #expect(ersteVersion.dokument.objekte.count == 1)
+
+        var zweiteAenderung = ersteVersion
+        zweiteAenderung.dokument = RaumDokument(
+            objekte: [Raumobjekt(id: "obj-2", typ: .pult, xCm: 10, yCm: 10)]
+        )
+        let zweiteVersion = try await s.aktualisieren(zweiteAenderung)
+
+        #expect(zweiteVersion.dokument.objekte.map(\.id) == ["obj-2"],
+                "Das neue Dokument ersetzt das alte vollstaendig")
+    }
+
+    @Test("Aktualisieren setzt geaendertAm neu, laesst erstelltAm aber unangetastet")
+    func geaendertAmWirdAktualisiertErstelltAmNicht() async throws {
+        let s = try speicher()
+        let angelegt = try await s.anlegen(raum())
+
+        try await Task.sleep(for: .milliseconds(20))
+
+        var geaendert = angelegt
+        geaendert.name = "Neuer Name"
+        let aktualisiert = try await s.aktualisieren(geaendert)
+
+        #expect(aktualisiert.erstelltAm == angelegt.erstelltAm,
+                "erstelltAm ist unveraenderlich")
+        #expect(aktualisiert.geaendertAm > angelegt.geaendertAm,
+                "geaendertAm muss beim Aktualisieren fortschreiten")
+    }
+
+    @Test("Loeschen ruehrt den Bestand anderer aktiver Raeume nicht an")
+    func loeschenBetrifftNurDenEinenRaum() async throws {
+        let s = try speicher()
+        let a = try await s.anlegen(raum(name: "Raum A"))
+        let b = try await s.anlegen(raum(name: "Raum B"))
+
+        try await s.loeschen(id: a.id)
+
+        let aktive = try await s.aktive()
+        #expect(aktive.map(\.name) == ["Raum B"])
+        #expect(try await s.raum(id: b.id)?.geloeschtAm == nil)
+    }
+
+    @Test("dokumentVersion wird unveraendert durchgereicht")
+    func dokumentVersionBleibtErhalten() async throws {
+        let s = try speicher()
+        var raumMitVersion = raum()
+        raumMitVersion.dokumentVersion = RaumDokument.version
+        let angelegt = try await s.anlegen(raumMitVersion)
+        #expect(angelegt.dokumentVersion == RaumDokument.version)
+        #expect(try await s.raum(id: angelegt.id)?.dokumentVersion == RaumDokument.version)
+    }
 }
