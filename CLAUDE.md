@@ -62,3 +62,22 @@ lokale Build ab, gewinnt die CI.
 - Keine Emojis, keine Entschuldigungen, keine Meta-Kommentare.
 - Widerworte sind erwünscht: unsinnige oder riskante Anforderungen erst
   benennen, dann Gegenvorschlag, dann auf Entscheidung warten.
+
+## Agent skills
+
+### Issue tracker
+
+Issues werden in GitHub Issues dieses Repositories verwaltet. Siehe
+`docs/agents/issue-tracker.md`.
+
+### Triage labels
+
+Die fünf Standard-Triage-Labels werden unverändert verwendet
+(`needs-triage`, `needs-info`, `ready-for-agent`, `ready-for-human`,
+`wontfix`). Siehe `docs/agents/triage-labels.md`.
+
+### Domain docs
+
+Single-context Layout: Domain-Begriffe in `CONTEXT.md` (falls vorhanden),
+Architekturentscheidungen unter `docs/decisions/`. Siehe
+`docs/agents/domain.md`.
